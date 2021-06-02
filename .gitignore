@@ -7,3 +7,6 @@ nucleus.exe
 
 # ignoring archived tests
 __archive
+
+# ignoring macOS silly hidden files
+.DS_Store
