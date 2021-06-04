@@ -17,10 +17,10 @@ ParseRule rules[] = {
     // punctuation
     [T_LEFT_PAREN] = {grouping, call, P_CALL},
     [T_RIGHT_PAREN] = {NULL, NULL, P_NONE},
-    [T_LEFT_BRACE] = {NULL, NULL, P_NONE},
+    [T_LEFT_BRACE] = {model, NULL, P_NONE},
     [T_RIGHT_BRACE] = {NULL, NULL, P_NONE},
     [T_COMMA] = {NULL, NULL, P_NONE},
-    [T_PERIOD] = {NULL, NULL, P_NONE},
+    [T_PERIOD] = {NULL, accessor, P_CALL},
     [T_SEMICOLON] = {NULL, NULL, P_NONE},
     [T_COLON] = {NULL, NULL, P_NONE},
 
@@ -60,9 +60,16 @@ ParseRule rules[] = {
     [T_MODEL] = {NULL, NULL, P_NONE},
     [T_REACTION] = {NULL, NULL, P_NONE},
 
+    // model based
+    [T_THIS] = {modelThis, NULL, P_NONE},
+    [T_SUPER] = {NULL, NULL, P_NONE},
+
     // library accessors
     [T_STDLIB] = {NULL, NULL, P_NONE},
     [T_DEBUG] = {NULL, NULL, P_NONE},
+
+    // directives
+    [T_MUTATE] = {NULL, NULL, P_NONE},
 
     // control tokens
     [T_IF] = {NULL, NULL, P_NONE},

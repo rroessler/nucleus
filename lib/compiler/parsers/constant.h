@@ -4,7 +4,11 @@
 // Nucleus Headers
 #include "../../particle/object.h"
 #include "../emit.h"
+#include "../expression/variable.h"
 #include "../parser.h"
+
+// forward declaration
+static void modelThis(bool canAssign);
 
 /** Parses a "number" constant. */
 static void number(bool canAssign) {
@@ -26,6 +30,16 @@ static void literal(bool canAssign) {
         default:  // unreachable
             return;
     }
+}
+
+/** Parses an inline model set by "{}"" */
+static void model(bool canAssign) {
+    // call to get the base model object
+    Token token = syntheticToken(T_IDENTIFIER, "BaseModel");
+    EMIT_SHORT(OP_GET_GLOBAL, identifierConstant(&token));
+    EMIT_SHORT(OP_CALL, 0);  // and call with ZERO arguments
+
+    consume(T_RIGHT_BRACE, "Expected '}' after base object model body.");
 }
 
 #endif

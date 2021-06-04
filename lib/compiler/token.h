@@ -46,12 +46,21 @@ typedef enum {
 
     // type based tokens
     T_LET,
+    T_CONST,
     T_MODEL,
+    T_DERIVES,
     T_REACTION,
+
+    // model tokens
+    T_THIS,
+    T_SUPER,
 
     // library accessors
     T_STDLIB,
     T_DEBUG,
+
+    // directives
+    T_MUTATE,
 
     // control tokens
     T_IF,
@@ -74,5 +83,20 @@ typedef struct {
     int line;
     int col;
 } Token;
+
+/**
+ * Generates a synthetic token at runtime.
+ * @param type              Type of token.
+ * @param word              String to give token.
+ */
+Token syntheticToken(TokenType type, const char* word) {
+    Token token;
+    token.type = type;
+    token.start = word;
+    token.length = (int)strlen(word);
+    token.line = -1;
+    token.col = -1;  // denotes column start number
+    return token;
+}
 
 #endif

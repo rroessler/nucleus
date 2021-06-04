@@ -4,7 +4,7 @@
 // Nucleus Headers
 #include "token.h"
 
-#define TOTAL_KEYWORDS 15
+#define TOTAL_KEYWORDS 19
 
 /** Nucleus Keywords */
 const char* __keywords[] = {
@@ -25,9 +25,15 @@ const char* __keywords[] = {
     "std",
     "debug",
 
+    // models
+    "this",
+    "super",
+
     // types
     "let",
+    "const",
     "model",
+    "derives",
     "rn",
     "reaction",
 };
@@ -48,10 +54,28 @@ const TokenType __keywordTokens[] = {
     T_STDLIB,
     T_DEBUG,
 
+    T_THIS,
+    T_SUPER,
+
     T_LET,
+    T_CONST,
     T_MODEL,
+    T_DERIVES,
     T_REACTION,
     T_REACTION,
+};
+
+// total number of directives (for iterating)
+#define TOTAL_DIRECTIVES 1
+
+// available directives
+const char* __directives[] = {
+    "mutate",
+};
+
+// and their associated tokens
+const TokenType __directiveTokens[] = {
+    T_MUTATE,
 };
 
 #endif

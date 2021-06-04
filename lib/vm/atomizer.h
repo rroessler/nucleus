@@ -13,6 +13,7 @@
 #include "../particle/duality.h"
 #include "../particle/print.h"
 #include "../particle/table.h"
+#include "flags.h"
 #include "state.h"
 
 // conditional includes
@@ -50,6 +51,9 @@ typedef struct {
     Obj** grayStack;
     size_t bytesAllocated;
     size_t nextGC;
+
+    // atomizer flags
+    uint32_t flags;
 } Atomizer;
 
 /** Global Atomizer Instance */
@@ -71,6 +75,7 @@ static Obj* obj_alloc(size_t size, ObjType type) {
     Obj* object = (Obj*)nuc_realloc(NULL, 0, size);
     object->type = type;
     object->isMarked = false;
+    object->mutable = false;
 
     // set up singley linked list
     object->next = atomizer.objects;
@@ -161,6 +166,27 @@ Particle atomizer_pop() {
     return *atomizer.stackTop;
 }
 
+/**
+ * Sets a given atomizer flag.
+ * @param flag              Flag to set.
+ */
+static void atomizer_setFlag(uint32_t flag) { atomizer.flags |= flag; }
+
+/**
+ * Unsets a given atomizer flag.
+ * @param flag              Flag to set.
+ */
+static void atomizer_unsetFlag(uint32_t flag) { atomizer.flags &= ~flag; }
+
+/** Resets all atomizer flags. */
+static void atomizer_resetFlags() { atomizer.flags = NUC_AFLAG_RESET; }
+
+/**
+ * Returns if a flag has been set.
+ * @param flag              Flag to check.
+ */
+static bool atomizer_checkFlag(uint32_t flag) { return (atomizer.flags & flag) != 0; }
+
 /** Macro to help push atomizer values. */
 #define PUSH(val) atomizer_push(val)
 
@@ -196,6 +222,9 @@ void atomizer_init() {
     atomizer.grayStack = NULL;
     atomizer.bytesAllocated = 0;
     atomizer.nextGC = 1024 * 1024;
+
+    // initialise the atomizer flags
+    atomizer_resetFlags();
 
     // define all native standard library methods
     nuc_predefineStdlib();
@@ -239,13 +268,13 @@ static void atomizer_runtimeError(const char* format, ...) {
         }
 
         // and now printing a TRIMMED source
-        fprintf(stderr, "\n[\x1b[2;36msource\x1b[0m] \x1b[36m\"");
+        fprintf(stderr, "\n[\x1b[2;36msource\x1b[0m] \x1b[36m`");
         char* ptr = NULL;
         while (isspace((unsigned)*source)) source++;     // chomp at start of source
         ptr = (char*)source + strlen(source) - 1;        // jump to the last char of source
         while (isspace((unsigned)*ptr)) ptr--;           // trim the end of the string
         while (source <= ptr) fputc(*source++, stderr);  // and
-        fprintf(stderr, "\"\x1b[0m\n");
+        fprintf(stderr, "`\x1b[0m\n");
     }
     fputs("\n", stderr);
 
@@ -298,6 +327,20 @@ static bool atomizer_callValue(Particle callee, int argCount) {
             }
             case OBJ_CLOSURE:  // call similarly to reaction
                 return atomizer_call(AS_CLOSURE(callee), argCount);
+            case OBJ_MODEL: {
+                ObjModel* model = AS_MODEL(callee);
+                atomizer.stackTop[-argCount - 1] =
+                    model->unstable
+                        ? NUC_OBJ_MUTABLE(model_newInstance(model))
+                        : NUC_OBJ(model_newInstance(model));
+                return true;
+            }
+            case OBJ_BOUND_METHOD: {
+                ObjBoundMethod* bound = AS_BOUND_METHOD(callee);
+                atomizer.stackTop[-argCount - 1] = bound->receiver;
+                return atomizer_call(bound->method, argCount);
+            }
+
             default:  // otherwise non-callable
                 break;
         }
@@ -306,6 +349,63 @@ static bool atomizer_callValue(Particle callee, int argCount) {
     atomizer_runtimeError("Can only call reactions.");
     return false;  // failed
 }
+
+/**
+ * Defines a fieldfor a model implementation.
+ * @param name              Name of field to define.
+ */
+static void atomizer_defineField(ObjString* name) {
+    Particle field = atomizer_peek(0);
+    ObjModel* model = AS_MODEL(atomizer_peek(1));
+    table_set(&model->defaults, name, field);
+    POP();
+}
+
+/**
+ * Defines a method for a model implementation.
+ * @param name              Name of method to define.
+ */
+static void atomizer_defineMethod(ObjString* name) {
+    Particle method = atomizer_peek(0);
+    ObjModel* model = AS_MODEL(atomizer_peek(1));
+    table_set(&model->methods, name, method);
+    POP();
+}
+
+/**
+ * Binds a method to global / local variable outside of the models scope.
+ * @param model             Model of method.
+ * @param name              Name of model method.
+ */
+static bool atomizer_bindMethod(ObjModel* model, ObjString* name) {
+    Particle method;
+    if (!table_get(&model->methods, name, &method)) {  // if fails then let user know
+        atomizer_runtimeError("Tried accessing undefined property \"%s\".", name->chars);
+        return false;
+    }
+
+    // and define as a bound method
+    ObjBoundMethod* bound = model_newBoundMethod(atomizer_peek(0), AS_CLOSURE(method));
+    POP();                 // pop the class instance
+    PUSH(NUC_OBJ(bound));  // and push the method
+    return true;
+}
+
+/**
+ * Disrupts the atomization if a particle is immutable and there was an attempt
+ * to set a new value to it.
+ * @param value             Particle to check.
+ */
+#define NUC_DISRUPT_IF_IMMUTABLE(value)                                    \
+    if (!value.mutable) {                                                  \
+        if (!atomizer_checkFlag(NUC_AFLAG_NEXT_SET_MUTABLE)) {             \
+            atomizer_runtimeError("Cannot modify an immutable particle."); \
+            return ASTATE_RUNTIME_UNSTABLE;                                \
+        } else {                                                           \
+            /** Unset the flag after checking */                           \
+            atomizer_unsetFlag(NUC_AFLAG_NEXT_SET_MUTABLE);                \
+        }                                                                  \
+    }
 
 /** 
  * Runs the MAIN Virtual machine loop, iterating over all bytecode instructions 
@@ -416,6 +516,11 @@ static ATOMIC_STATE quantize() {
                 PUSH(NUC_BOOL(inst == OP_TRUE));
                 break;
 
+            /** Directive Operations */
+            case OP_MUTATE:
+                atomizer_setFlag(NUC_AFLAG_NEXT_SET_MUTABLE);
+                break;
+
             /** Control Operations */
             case OP_RETURN: {  // request to complete quantization
                 Particle res = POP();
@@ -478,6 +583,65 @@ static ATOMIC_STATE quantize() {
                 }
             } break;
 
+            /** Model Based Operations */
+            case OP_MODEL: {
+                PUSH(NUC_OBJ(model_new(READ_STRING(), NUC_MODEL_STABLE)));
+            } break;
+            case OP_METHOD:
+                atomizer_defineMethod(READ_STRING());
+                break;
+            case OP_FIELD:
+                atomizer_defineField(READ_STRING());
+                break;
+            case OP_GET_PROPERTY: {
+                // for now only allow instances, however LATER, this can be extended to CALL
+                // internal object properties/methods (eg: ".toString()" for numbers)
+                if (!IS_INSTANCE(atomizer_peek(0))) {
+                    atomizer_runtimeError("Only model instances can have properties.");
+                    return ASTATE_RUNTIME_UNSTABLE;
+                }
+
+                ObjInstance* inst = AS_INSTANCE(atomizer_peek(0));
+                ObjString* name = READ_STRING();
+
+                // check if a model field
+                Particle value;  // temporary value to write to
+                if (table_get(&inst->model->defaults, name, &value)) {
+                    POP();
+                    PUSH(value);
+                    break;
+                } else if (table_get(&inst->fields, name, &value)) {
+                    POP();
+                    PUSH(value);
+                    break;
+                }
+
+                // and now check for bound methods
+                if (!atomizer_bindMethod(inst->model, name)) {
+                    POP();  // bind method failed, so push a null particle
+                    PUSH(NUC_NULL);
+                }
+            } break;
+            case OP_SET_PROPERTY: {
+                // inversely, ONLY instances will be allowed to have properties set
+                if (!IS_INSTANCE(atomizer_peek(1))) {
+                    atomizer_runtimeError("Only model instances can have fields.");
+                    return ASTATE_RUNTIME_UNSTABLE;
+                }
+
+                // make sure the instance is mutable
+                NUC_DISRUPT_IF_IMMUTABLE(atomizer_peek(1));
+                ObjString* accessor = READ_STRING();
+
+                ObjInstance* inst = AS_INSTANCE(atomizer_peek(1));
+                if (!table_set(&inst->model->defaults, accessor, atomizer_peek(0))) {
+                    table_set(&inst->fields, accessor, atomizer_peek(0));
+                }
+                Particle value = POP();
+                POP();
+                PUSH(value);
+            } break;
+
             /** Atomizer Specific Operations */
             case OP_POP:  // simply pops the current top of the stack
                 POP();
@@ -486,6 +650,11 @@ static ATOMIC_STATE quantize() {
                 ObjString* name = READ_STRING();
                 table_set(&atomizer.globals, name, atomizer_peek(0));
                 POP();
+            } break;
+            case OP_SET_IMMUTABLE: {
+                Particle value = POP();
+                value.mutable = false;
+                PUSH(value);
             } break;
             case OP_GET_GLOBAL: {
                 ObjString* name = READ_STRING();  // read the name of the variable
@@ -500,11 +669,20 @@ static ATOMIC_STATE quantize() {
             } break;
             case OP_SET_GLOBAL: {
                 ObjString* name = READ_STRING();  // get global to set
-                if (table_set(&atomizer.globals, name, atomizer_peek(0))) {
-                    table_delete(&atomizer.globals, name);  // clean up
+
+                // make sure the item is mutable, to do this need to GET the value first
+                Particle value;
+                if (!table_get(&atomizer.globals, name, &value)) {
                     atomizer_runtimeError("Tried to set undefined variable \"%s\".", name->chars);
+                    table_delete(&atomizer.globals, name);  // clean up
                     return ASTATE_RUNTIME_UNSTABLE;
                 }
+
+                // and disrupt if it is immutable
+                NUC_DISRUPT_IF_IMMUTABLE(value);
+
+                // and set to globals confidently as could not have passed earlier
+                table_set(&atomizer.globals, name, atomizer_peek(0));
             } break;
             case OP_GET_LOCAL: {  // save a local variable to the top of the stack
                 uint8_t slot = READ_BYTE();
@@ -512,6 +690,7 @@ static ATOMIC_STATE quantize() {
             } break;
             case OP_SET_LOCAL: {
                 uint8_t slot = READ_BYTE();
+                NUC_DISRUPT_IF_IMMUTABLE(atomizer_peek(0));
                 frame->slots[slot] = atomizer_peek(0);
             } break;
             case OP_GET_UPVALUE: {
@@ -520,6 +699,7 @@ static ATOMIC_STATE quantize() {
             } break;
             case OP_SET_UPVALUE: {
                 uint8_t slot = READ_BYTE();
+                NUC_DISRUPT_IF_IMMUTABLE(atomizer_peek(0));
                 *frame->closure->upvalues[slot]->location = atomizer_peek(0);
             } break;
             case OP_CLOSE_UPVALUE: {
@@ -536,6 +716,10 @@ static ATOMIC_STATE quantize() {
                     particle_print(val, true);
                 }
             } break;
+
+            default:  // if a bad operation occurs
+                atomizer_runtimeError("Encountered an unknown operation.");
+                return ASTATE_RUNTIME_UNSTABLE;
         }
     }
 

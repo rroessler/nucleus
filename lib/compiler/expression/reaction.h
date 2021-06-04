@@ -25,7 +25,7 @@ static void reaction(ReactionType type) {
             current->reac->arity++;
             if (current->reac->arity > UINT8_MAX) errorAtCurrent("Cannot have more than 255 parameters for reactions.");
             uint8_t constant = parseVariable("Expected a parameter name.");
-            defineVariable(constant);
+            defineVariable(constant, false);  // not mutable so can be changed
 
             // and to set defaults, want to coordinate defaulting NON-defaulted arguments
             if (match(T_EQUAL)) {
@@ -71,7 +71,7 @@ static void reactionDeclaration() {
     uint8_t global = parseVariable("Expected a reaction name.");
     fuser_markInitialised();
     reaction(RT_REACTION);
-    defineVariable(global);
+    defineVariable(global, true);  // set reaction name as immutable
 }
 
 #endif

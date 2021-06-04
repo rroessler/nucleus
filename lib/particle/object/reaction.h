@@ -16,6 +16,7 @@ typedef struct ObjClosure ObjClosure;
 /** Type Definition for Reaction Types. */
 typedef enum {
     RT_REACTION,
+    RT_METHOD,
     RT_SCRIPT,
 } ReactionType;
 

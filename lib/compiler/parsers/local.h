@@ -120,13 +120,16 @@ static void declareVariable() {
 /**
  * Emits a global reference to define.
  * @param global            Global reference value.
+ * @param immutable         If an item is declared as immutable.
  */
-static void defineVariable(uint8_t global) {
+static void defineVariable(uint8_t global, bool immutable) {
     if (current->scopeDepth > 0) {
         fuser_markInitialised();  // mark all initialised locals
         return;
     }
 
+    // declare item as immutable if needed
+    if (immutable) emitByte(OP_SET_IMMUTABLE);
     EMIT_SHORT(OP_DEFINE_GLOBAL, global);
 }
 

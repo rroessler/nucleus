@@ -20,6 +20,7 @@ typedef enum {
 /** Particle - Generic Nucleus Value */
 typedef struct {
     Moment type;
+    bool mutable;
     union {
         bool boolean;
         double number;
@@ -34,10 +35,11 @@ typedef struct {
     Particle* values;
 } ParticleArray;
 
-#define NUC_BOOL(value) ((Particle){TYPE_BOOL, {.boolean = value}})
-#define NUC_NULL ((Particle){TYPE_NULL, {.number = 0}})
-#define NUC_NUMBER(value) ((Particle){TYPE_NUMBER, {.number = value}})
-#define NUC_OBJ(value) ((Particle){TYPE_OBJ, {.obj = (Obj*)value}})
+#define NUC_BOOL(value) ((Particle){TYPE_BOOL, true, {.boolean = value}})
+#define NUC_NULL ((Particle){TYPE_NULL, true, {.number = 0}})
+#define NUC_NUMBER(value) ((Particle){TYPE_NUMBER, true, {.number = value}})
+#define NUC_OBJ(value) ((Particle){TYPE_OBJ, false, {.obj = (Obj*)value}})
+#define NUC_OBJ_MUTABLE(value) ((Particle){TYPE_OBJ, true, {.obj = (Obj*)value}})
 
 #define AS_BOOL(value) ((value).as.boolean)
 #define AS_NUMBER(value) ((value).as.number)

@@ -12,6 +12,9 @@ typedef enum {
     OBJ_UPVALUE,
     OBJ_REACTION,
     OBJ_NATIVE,
+    OBJ_MODEL,
+    OBJ_INSTANCE,
+    OBJ_BOUND_METHOD,
     OBJ_STRING,
 } ObjType;
 
@@ -19,6 +22,7 @@ typedef enum {
 struct Obj {
     ObjType type;
     bool isMarked;
+    bool mutable;      // whether the object can be MODIFIED
     struct Obj* next;  // pointer to NEXT object on heap
 };
 
@@ -27,12 +31,18 @@ struct Obj {
 
 // IS defines for objects
 #define IS_CLOSURE(value) isObjType(value, OBJ_CLOSURE)
+#define IS_MODEL(value) isObjType(value, OBJ_MODEL)
+#define IS_BOUND_METHOD(value) isObjType(value, OBJ_BOUND_METHOD)
+#define IS_INSTANCE(value) isObjType(value, OBJ_INSTANCE)
 #define IS_REACTION(value) isObjType(value, OBJ_REACTION)
 #define IS_NATIVE(value) isObjType(value, OBJ_NATIVE)
 #define IS_STRING(value) isObjType(value, OBJ_STRING)
 
 // AS defines for objects
 #define AS_CLOSURE(value) ((ObjClosure*)AS_OBJ(value))
+#define AS_MODEL(value) ((ObjModel*)AS_OBJ(value))
+#define AS_BOUND_METHOD(value) ((ObjBoundMethod*)AS_OBJ(value))
+#define AS_INSTANCE(value) ((ObjInstance*)AS_OBJ(value))
 #define AS_REACTION(value) ((ObjReaction*)AS_OBJ(value))
 #define AS_NATIVE(value) (((ObjNative*)AS_OBJ(value))->reac)
 #define AS_STRING(value) ((ObjString*)AS_OBJ(value))
@@ -60,6 +70,7 @@ void obj_freeAll();
 
 // includes that will be resolved in compilation
 #include "object/closure.h"
+#include "object/model.h"
 #include "object/native.h"
 #include "object/reaction.h"
 #include "object/string.h"
@@ -95,6 +106,20 @@ static void obj_free(Obj* object) {
         case OBJ_UPVALUE: {
             FREE(ObjUpvalue, object);
         } break;
+        case OBJ_MODEL: {
+            ObjModel* model = (ObjModel*)object;
+            table_free(&model->methods);
+            table_free(&model->defaults);
+            FREE(ObjModel, object);
+        } break;
+        case OBJ_INSTANCE: {
+            ObjInstance* inst = (ObjInstance*)object;
+            table_free(&inst->fields);
+            FREE(ObjInstance, object);
+        } break;
+        case OBJ_BOUND_METHOD: {
+            FREE(ObjBoundMethod, object);
+        } break;
     }
 }
 
@@ -128,6 +153,21 @@ void obj_print(Particle value, bool prettify) {
         case OBJ_UPVALUE:
             if (prettify) printf("\x1b[34m");
             printf("upvalue");
+            if (prettify) printf("\x1b[0m");
+            break;
+        case OBJ_MODEL:
+            if (prettify) printf("\x1b[3;33m");
+            printf("<model: %s>", AS_MODEL(value)->name->chars);
+            if (prettify) printf("\x1b[0m");
+            break;
+        case OBJ_INSTANCE:
+            if (prettify) printf("\x1b[3;33m");
+            printf("<instance: %s>", AS_INSTANCE(value)->model->name->chars);
+            if (prettify) printf("\x1b[0m");
+            break;
+        case OBJ_BOUND_METHOD:
+            if (prettify) printf("\x1b[32m");
+            reaction_print(AS_BOUND_METHOD(value)->method->reac);
             if (prettify) printf("\x1b[0m");
             break;
     }

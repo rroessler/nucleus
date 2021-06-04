@@ -45,8 +45,14 @@ typedef struct Fuser {
     int scopeDepth;
 } Fuser;
 
+/** Model Compiler Structure (fixes global "this" references) */
+typedef struct ModelFuser {
+    struct ModelFuser* enclosing;
+} ModelFuser;
+
 /** Set a global current Compiler */
 Fuser* current = NULL;
+ModelFuser* currentModel = NULL;
 
 /*****************************
  *  FUSER SCOPE BASED ITEMS  *
@@ -99,6 +105,19 @@ static void fuser_markInitialised() {
     current->locals[current->localCount - 1].depth = current->scopeDepth;
 }
 
+/** Parses a model "this" reference */
+static void modelThis(bool canAssign) {
+    // ensure we have a class accessing "this"
+    if (currentModel == NULL) {
+        error("Cannot user \"this\" outside of a model.");
+        return;
+    }
+
+    // and parse as a variable
+    emitByte(OP_MUTATE);  // want "this" to be mutable
+    variable(false);
+}
+
 /********************
  *  ERROR HANDLING  *
  ********************/
@@ -138,8 +157,15 @@ static void fuser_init(Fuser* fuser, ReactionType type) {
     Local* local = &current->locals[current->localCount++];
     local->depth = 0;
     local->isCaptured = false;
-    local->name.start = "";
-    local->name.length = 0;
+
+    // allow THIS referencing
+    if (type != RT_REACTION) {
+        local->name.start = "this";
+        local->name.length = 4;
+    } else {
+        local->name.start = "";
+        local->name.length = 0;
+    }
 }
 
 /** Retrieves the currently chunk being compiled to. */

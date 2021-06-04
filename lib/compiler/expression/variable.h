@@ -8,7 +8,7 @@
 
 // forward declarations
 static void expression();
-static void defineVariable(uint8_t global);
+static void defineVariable(uint8_t global, bool immutable);
 static uint8_t parseVariable(const char* message);
 static void namedVariable(Token name, bool canAssign, bool ignoreExpression);
 
@@ -20,8 +20,11 @@ static uint8_t identifierConstant(Token* name) {
     return makeConstant(NUC_OBJ(objString_copy(name->start, name->length)));
 }
 
-/** Compiles a variable declaration. */
-static void variableDeclaration() {
+/** 
+ * Compiles a variable declaration. 
+ * @param immutable         Denotes if the variable is immutable.
+ */
+static void variableDeclaration(bool immutable) {
     // parse the variable
     uint8_t global = parseVariable("Expected a variable name.");
 
@@ -33,7 +36,7 @@ static void variableDeclaration() {
 
     // now expect a closing semicolon
     consume(T_SEMICOLON, "Expected a ';' after variable declaration.");
-    defineVariable(global);
+    defineVariable(global, immutable);
 }
 
 /** Parses a named variable. */

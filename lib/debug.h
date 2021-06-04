@@ -120,6 +120,7 @@ int nuc_disassembleInstruction(Chunk* chunk, int offset, const char* prompt) {
 
         /** Atomizer Specific Operations */
         CASE_SIMPLE(OP_POP, "\x1b[34mOP_POP\x1b[0m");
+        CASE_BYTE(OP_SET_IMMUTABLE, "\x1b[34mOP_SET_IMMUTABLE\x1b[0m");
         CASE_CONSTANT(OP_DEFINE_GLOBAL, "\x1b[34mOP_DEFINE_GLOBAL\x1b[0m");
         CASE_CONSTANT(OP_GET_GLOBAL, "\x1b[34mOP_GET_GLOBAL\x1b[0m");
         CASE_CONSTANT(OP_SET_GLOBAL, "\x1b[34mOP_SET_GLOBAL\x1b[0m");
@@ -129,8 +130,18 @@ int nuc_disassembleInstruction(Chunk* chunk, int offset, const char* prompt) {
         CASE_BYTE(OP_SET_UPVALUE, "\x1b[34mOP_SET_UPVALUE\x1b[0m");
         CASE_SIMPLE(OP_CLOSE_UPVALUE, "\x1b[34mOP_CLOSE_UPVALUE\x1b[0m");
 
+        /** Model Operations */
+        CASE_CONSTANT(OP_MODEL, "\x1b[33mOP_MODEL\x1b[0m");
+        CASE_CONSTANT(OP_METHOD, "\x1b[33mOP_METHOD\x1b[0m");
+        CASE_CONSTANT(OP_FIELD, "\x1b[33mOP_FIELD\x1b[0m");
+        CASE_CONSTANT(OP_GET_PROPERTY, "\x1b[33mOP_GET_PROPERTY\x1b[0m");
+        CASE_CONSTANT(OP_SET_PROPERTY, "\x1b[33mOP_SET_PROPERTY\x1b[0m");
+
         /** Library Operations */
         CASE_SIMPLE(OP_PRINT, "\x1b[3;32mOP_PRINT\x1b[0m");
+
+        /** Directive Operations */
+        CASE_BYTE(OP_MUTATE, "\x1b[35mOP_MUTATE\x1b[0m");
 
         /** Control Operations */
         CASE_SIMPLE(OP_RETURN, "\x1b[3;31mOP_RETURN\x1b[0m");

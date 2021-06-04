@@ -111,6 +111,22 @@ static void gc_blackenObject(Obj* object) {
         case OBJ_UPVALUE:
             gc_markValue(((ObjUpvalue*)object)->closed);
             break;
+        case OBJ_MODEL: {
+            ObjModel* model = (ObjModel*)object;
+            gc_markObject((Obj*)model->name);
+            gc_markTable(&model->methods);
+            gc_markTable(&model->defaults);
+        } break;
+        case OBJ_INSTANCE: {
+            ObjInstance* inst = (ObjInstance*)object;
+            gc_markObject((Obj*)inst->model);
+            gc_markTable(&inst->fields);
+        } break;
+        case OBJ_BOUND_METHOD: {
+            ObjBoundMethod* bound = (ObjBoundMethod*)object;
+            gc_markValue(bound->receiver);
+            gc_markObject((Obj*)bound->method);
+        } break;
         case OBJ_NATIVE:
         case OBJ_STRING:
             break;

@@ -10,7 +10,7 @@ static Particle nuc_std__print(int argCount, Particle* args) {
         for (int i = 0; i < argCount; i++) {
             particle_print(args[i], false);  // do not prettify
         }
-    } else {
+    } else if (argCount == 1) {
         particle_print(args[0], !IS_STRING(args[0]));  // want to pretty print the value
     }
 

@@ -258,6 +258,22 @@ static Token lexer_identifier() {
     return coerceKeyword();
 }
 
+/** Tokenizes a given directive */
+static Token lexer_directive() {
+    lexer.start = lexer.current;
+    lexer_advance();  // eat the @
+    while (strings_isAlpha(lexer_peek()) || strings_isDigit(lexer_peek())) lexer_advance();
+
+    // iterate over the directives
+    for (int i = 0; i < TOTAL_DIRECTIVES; i++) {
+        // and return the appropriate item
+        if (lexer_matchString(__directives[i], strlen(__directives[i]))) return lexer_tokenize(__directiveTokens[i]);
+    }
+
+    // otherwise we couldn't match a valid directive
+    return lexer_error("Unknown directive declared.");
+}
+
 /** Coordinates scanning for the next available token. */
 Token lexer_scan() {
     lexer_skipWS();  // ignore whitespace
@@ -319,6 +335,9 @@ Token lexer_scan() {
         // strings
         case '"':
             return lexer_string();
+        // directives
+        case '@':
+            return lexer_directive();
     }
 
     // otherwise return an error token

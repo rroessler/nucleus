@@ -26,4 +26,17 @@ static void call(bool canAssign) {
     EMIT_SHORT(OP_CALL, argCount);
 }
 
+/** Parses call accessors */
+static void accessor(bool canAssign) {
+    consume(T_IDENTIFIER, "Expected a property or reaction name after period.");
+    uint8_t name = identifierConstant(&parser.previous);
+
+    if (canAssign && match(T_EQUAL)) {
+        expression();
+        EMIT_SHORT(OP_SET_PROPERTY, name);
+    } else {
+        EMIT_SHORT(OP_GET_PROPERTY, name);
+    }
+}
+
 #endif

@@ -44,8 +44,19 @@ typedef enum {
     OP_CALL,
     OP_CLOSURE,
 
+    // model based items
+    OP_MODEL,
+    OP_METHOD,
+    OP_FIELD,
+    OP_GET_PROPERTY,
+    OP_SET_PROPERTY,
+
+    // directives
+    OP_MUTATE,
+
     // atomizer specific operations
     OP_DEFINE_GLOBAL,
+    OP_SET_IMMUTABLE,
     OP_GET_GLOBAL,
     OP_SET_GLOBAL,
     OP_SET_LOCAL,

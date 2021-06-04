@@ -49,7 +49,7 @@ static TokenType eatForInitialiser() {
     if (inclusivity == T_ERROR) return inclusivity;  // immediately return an error if needed
 
     // and NOW eat the desired initialiser expression
-    defineVariable(initialiser);
+    defineVariable(initialiser, false);
     return inclusivity;
 }
 
