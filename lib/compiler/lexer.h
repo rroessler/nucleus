@@ -220,9 +220,9 @@ static bool lexer_matchString(const char *matcher, int length) {
 }
 
 /** Converts a given token to a native instruction.*/
-static Token native() {
+static Token native(const char *message) {
     // got the LIB or DEBUG token, so we want to check the next character is a period
-    if (lexer_peek() != '.') return lexer_error("Expected a period after reserved keyword \"std\".");
+    if (lexer_peek() != '.') return lexer_error(message);
 
     do {  // can iterate ad-finitum as we eat accessors
           // eat the current comma
@@ -243,8 +243,12 @@ static Token coerceKeyword() {
     for (int i = 0; i < TOTAL_KEYWORDS; i++) {
         // check for a valid match
         if (lexer_matchString(__keywords[i], strlen(__keywords[i]))) {
-            if (__keywordTokens[i] != T_STDLIB) return lexer_tokenize(__keywordTokens[i]);
-            return native();  // return as a native reaction / property
+            if (__keywordTokens[i] == T_STDLIB) {  // return as a native reaction / property
+                return native("Expected a period after reserved keyword \"std\".");
+            } else if (__keywordTokens[i] == T_MATH) {
+                return native("Expected a period after reserved keyword \"math\".");
+            }
+            return lexer_tokenize(__keywordTokens[i]);
         }
     }
 

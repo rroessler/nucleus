@@ -57,6 +57,7 @@ typedef enum {
 
     // library accessors
     T_STDLIB,
+    T_MATH,
     T_DEBUG,
 
     // directives

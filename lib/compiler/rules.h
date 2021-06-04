@@ -66,6 +66,7 @@ ParseRule rules[] = {
 
     // library accessors
     [T_STDLIB] = {NULL, NULL, P_NONE},
+    [T_MATH] = {NULL, NULL, P_NONE},
     [T_DEBUG] = {NULL, NULL, P_NONE},
 
     // directives

@@ -4,7 +4,7 @@
 // Nucleus Headers
 #include "token.h"
 
-#define TOTAL_KEYWORDS 19
+#define TOTAL_KEYWORDS 20
 
 /** Nucleus Keywords */
 const char* __keywords[] = {
@@ -23,6 +23,7 @@ const char* __keywords[] = {
 
     // lib
     "std",
+    "math",
     "debug",
 
     // models
@@ -52,6 +53,7 @@ const TokenType __keywordTokens[] = {
     T_NULL,
 
     T_STDLIB,
+    T_MATH,
     T_DEBUG,
 
     T_THIS,

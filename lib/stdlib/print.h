@@ -5,7 +5,7 @@
 #include "../particle/print.h"
 
 /** Prints all given Nucleus Values. */
-static Particle nuc_std__print(int argCount, Particle* args) {
+static inline Particle nuc_std__print(int argCount, Particle* args) {
     if (argCount > 1) {
         for (int i = 0; i < argCount; i++) {
             particle_print(args[i], false);  // do not prettify

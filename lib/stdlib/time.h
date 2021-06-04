@@ -13,12 +13,12 @@
 #define MILLION 1000000L
 
 /** Returns the current time from program inception as a Nucleus Numeric. */
-static Particle nuc_std__time_clock(int argCount, Particle* args) {
+static inline Particle nuc_std__time_clock(int argCount, Particle* args) {
     return NUC_NUMBER(MILLION * (double)clock() / CLOCKS_PER_SEC);
 }
 
 /** Returns the current time since epoch as a Nucleus Numeric. */
-static Particle nuc_std__time_now(int argCount, Particle* args) {
+static inline Particle nuc_std__time_now(int argCount, Particle* args) {
     // initialise some values
     struct timeval tv;
     gettimeofday(&tv, NULL);
