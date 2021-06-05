@@ -84,7 +84,7 @@ static double clz32(double num) {
 /** Conducts the "abs" math operation. */
 static inline Particle nuc_math__abs(int argCount, Particle* args) {
     NUC_MATH_VALIDATE_ONE_ARG("abs");  // validate the method
-    return NUC_NUMBER(abs(AS_NUMBER(args[0])));
+    return NUC_NUMBER(fabs(AS_NUMBER(args[0])));
 }
 
 /** Conducts the "acos" math operation. */

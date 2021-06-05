@@ -8,6 +8,9 @@ static void returnStatement() {
     if (match(T_SEMICOLON)) {
         emitReturn();
     } else {
+        // ensure valid return
+        if (current->type == RT_INITIALISER) error("Cannot return a value from a model constructor.");
+
         expression();
         consume(T_SEMICOLON, "Expected ';' after return value.");
         emitByte(OP_RETURN);

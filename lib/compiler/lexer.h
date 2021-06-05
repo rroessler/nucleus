@@ -264,7 +264,6 @@ static Token lexer_identifier() {
 
 /** Tokenizes a given directive */
 static Token lexer_directive() {
-    lexer.start = lexer.current;
     lexer_advance();  // eat the @
     while (strings_isAlpha(lexer_peek()) || strings_isDigit(lexer_peek())) lexer_advance();
 

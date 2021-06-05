@@ -68,16 +68,18 @@ const TokenType __keywordTokens[] = {
 };
 
 // total number of directives (for iterating)
-#define TOTAL_DIRECTIVES 1
+#define TOTAL_DIRECTIVES 2
 
 // available directives
 const char* __directives[] = {
-    "mutate",
+    "@mutate",
+    "@construct",
 };
 
 // and their associated tokens
 const TokenType __directiveTokens[] = {
     T_MUTATE,
+    T_IDENTIFIER,
 };
 
 #endif

@@ -17,6 +17,7 @@ typedef struct ObjClosure ObjClosure;
 typedef enum {
     RT_REACTION,
     RT_METHOD,
+    RT_INITIALISER,
     RT_SCRIPT,
 } ReactionType;
 
@@ -35,6 +36,7 @@ typedef struct {
     ObjClosure* closure;
     uint8_t* ip;
     Particle* slots;
+    uint8_t slotCount;
 } CallFrame;
 
 /** Creates an allocates memory for a new Reaction Object. */

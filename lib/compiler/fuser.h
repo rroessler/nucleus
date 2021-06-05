@@ -171,6 +171,17 @@ static void fuser_init(Fuser* fuser, ReactionType type) {
 /** Retrieves the currently chunk being compiled to. */
 static Chunk* currentChunk() { return &current->reac->chunk; }
 
+/** Emits the Return Operation. */
+static void emitReturn() {
+    if (current->type == RT_INITIALISER) {
+        EMIT_SHORT(OP_GET_LOCAL, 0);
+    } else {
+        emitByte(OP_NULL);
+    }
+
+    emitByte(OP_RETURN);
+}
+
 /** Starts a compilation scope. */
 static void fuser_beginScope() { current->scopeDepth++; }
 

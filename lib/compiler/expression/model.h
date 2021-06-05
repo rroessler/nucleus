@@ -10,6 +10,7 @@ static void method() {
 
     // parse the item as a reaction
     ReactionType type = RT_METHOD;
+    if (parser.previous.length == 10 && memcmp(parser.previous.start, "@construct", 10) == 0) type = RT_INITIALISER;
     reaction(type);
 
     // and emit as a method

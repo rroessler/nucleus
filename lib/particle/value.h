@@ -11,8 +11,8 @@ typedef struct ObjString ObjString;
 
 /** Particle Moment - Type of Nucleus Value */
 typedef enum {
-    TYPE_BOOL,
     TYPE_NULL,
+    TYPE_BOOL,
     TYPE_NUMBER,
     TYPE_OBJ,
 } Moment;

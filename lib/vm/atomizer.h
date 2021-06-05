@@ -42,6 +42,7 @@ typedef struct {
 
     // global variables
     Obj* objects;
+    ObjString* initString;
     Table globals;
     Table strings;  // for string interning => makes common strings quickly accesible
 
@@ -223,6 +224,10 @@ void atomizer_init() {
     atomizer.bytesAllocated = 0;
     atomizer.nextGC = 1024 * 1024;
 
+    // create and intern the init string
+    atomizer.initString = NULL;
+    atomizer.initString = objString_copy("@construct", 10);
+
     // initialise the atomizer flags
     atomizer_resetFlags();
 
@@ -234,6 +239,7 @@ void atomizer_init() {
 void atomizer_free() {
     table_free(&atomizer.globals);
     table_free(&atomizer.strings);
+    atomizer.initString = NULL;
     obj_freeAll();
     free(atomizer.grayStack);
 }
@@ -307,6 +313,7 @@ static bool atomizer_call(ObjClosure* closure, int argCount) {
     frame->closure = closure;
     frame->ip = closure->reac->chunk.code;
     frame->slots = atomizer.stackTop - argCount - 1;
+    frame->slotCount = argCount;  // and create a frame with a slot count equal to args
     return true;
 }
 
@@ -325,16 +332,30 @@ static bool atomizer_callValue(Particle callee, int argCount) {
                 PUSH(result);
                 return true;
             }
+
             case OBJ_CLOSURE:  // call similarly to reaction
                 return atomizer_call(AS_CLOSURE(callee), argCount);
+
             case OBJ_MODEL: {
+                // create the new instance
                 ObjModel* model = AS_MODEL(callee);
                 atomizer.stackTop[-argCount - 1] =
                     model->unstable
                         ? NUC_OBJ_MUTABLE(model_newInstance(model))
                         : NUC_OBJ(model_newInstance(model));
+
+                // and invoke the constructor
+                Particle constructor;
+                if (table_get(&model->methods, atomizer.initString, &constructor)) {
+                    return atomizer_call(AS_CLOSURE(constructor), argCount);
+                } else if (argCount != 0) {
+                    atomizer_runtimeError("Expected 0 arguments for model without constructor.");
+                    return false;
+                }
+
                 return true;
             }
+
             case OBJ_BOUND_METHOD: {
                 ObjBoundMethod* bound = AS_BOUND_METHOD(callee);
                 atomizer.stackTop[-argCount - 1] = bound->receiver;
@@ -686,12 +707,17 @@ static ATOMIC_STATE quantize() {
             } break;
             case OP_GET_LOCAL: {  // save a local variable to the top of the stack
                 uint8_t slot = READ_BYTE();
-                PUSH(frame->slots[slot]);
+                if (slot > frame->slotCount) {
+                    PUSH(NUC_NULL);  // this is to SOLIDIFY exceeding the total slots
+                } else {
+                    PUSH(frame->slots[slot]);
+                }
             } break;
             case OP_SET_LOCAL: {
                 uint8_t slot = READ_BYTE();
                 NUC_DISRUPT_IF_IMMUTABLE(atomizer_peek(0));
                 frame->slots[slot] = atomizer_peek(0);
+                if (slot > frame->slotCount) frame->slotCount++;
             } break;
             case OP_GET_UPVALUE: {
                 uint8_t slot = READ_BYTE();

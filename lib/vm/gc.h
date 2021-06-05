@@ -81,8 +81,9 @@ static void gv_markRoots() {
     for (int i = 0; i < atomizer.frameCount; i++) gc_markObject((Obj*)atomizer.frames[i].closure);
     for (ObjUpvalue* uv = atomizer.openUpvalues; uv != NULL; uv = uv->next) gc_markObject((Obj*)uv);
 
-    // now want to mark tables
+    // now want to mark tables / roots of atomizer
     gc_markTable(&atomizer.globals);
+    gc_markObject((Obj*)atomizer.initString);
 }
 
 /************************

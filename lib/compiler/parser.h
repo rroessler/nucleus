@@ -105,6 +105,12 @@ static void consume(TokenType type, const char* message) {
  */
 static bool check(TokenType type) { return parser.current.type == type; }
 
+/** 
+ * Checks if the previous token matches the given type. 
+ * @param type              Expected type.
+ */
+static bool checkPrevious(TokenType type) { return parser.previous.type == type; }
+
 /**
  * Advances the parser if a match to a token type occurs.
  * @param type              Type to match.

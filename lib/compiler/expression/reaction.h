@@ -31,17 +31,16 @@ static void reaction(ReactionType type) {
             if (match(T_EQUAL)) {
                 size_t myLocal = current->localCount - 1;
                 EMIT_SHORT(OP_GET_LOCAL, myLocal);
-                emitByte(OP_NULL);
-                EMIT_SHORT(OP_EQUAL, OP_NOT);
+                EMIT_SHORT(OP_NULL, OP_EQUAL);
 
                 int jumpIndex = emitJump(OP_JUMP_IF_FALSE_OR_POP);
                 fuser_beginScope();
                 expression();
+                emitByte(OP_MUTATE);
                 EMIT_SHORT(OP_SET_LOCAL, myLocal);
                 fuser_endScope();
 
                 patchJump(jumpIndex);
-                emitByte(OP_POP);
                 current->reac->defaults++;
             } else if (current->reac->defaults) {
                 error("Non-defaulted reaction parameter specified after a defaulted reaction parameter.");

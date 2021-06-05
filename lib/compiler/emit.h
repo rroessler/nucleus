@@ -12,6 +12,7 @@
 
 // forward declaraion
 static Chunk* currentChunk();
+static void emitReturn();
 
 /**
  * Make a new constant value for the current chunk.
@@ -42,12 +43,6 @@ static void emitByte(uint8_t byte) { chunk_write(currentChunk(), byte, parser.pr
 #define EMIT_SHORT(b1, b2) \
     emitByte(b1);          \
     emitByte(b2)
-
-/** Emits the Return Operation. */
-static void emitReturn() {
-    emitByte(OP_NULL);
-    emitByte(OP_RETURN);
-}
 
 /** Emits a constant as a operation value. */
 static void emitConstant(Particle value) { EMIT_SHORT(OP_CONSTANT, makeConstant(value)); }
