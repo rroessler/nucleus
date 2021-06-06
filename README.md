@@ -86,8 +86,8 @@ This performance conversly worked on native `math` calls, in particular `math.sq
 Acknowledgements
 ----------------
 
-I would like to give mention to the (Crafting Interpreters)[https://craftinginterpreters.com/] book. This helped cement a solid foundation for Nucleus, and gave tremendous insight into the creation of C based interpreters.
+I would like to give mention to the [Crafting Interpreters](https://craftinginterpreters.com/) book. This helped cement a solid foundation for Nucleus, and gave tremendous insight into the creation of C based interpreters.
 
 License
 -------
-MIT: [link](https://opensource.org/licenses/MIT)
+[MIT](https://opensource.org/licenses/MIT)
