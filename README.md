@@ -65,7 +65,7 @@ reaction fib(n) {
 Performance Tests
 -----------------
 
-### (Ackermann Function)[https://en.wikipedia.org/wiki/Ackermann_function]
+### Ackermann Function (see: https://en.wikipedia.org/wiki/Ackermann_function)
 This performance test worked around stress testing function calls with the recursive Ackermann Function. The test was conducted with `ack(3, 6)` as Python cannot compute much higher than this (exceeded max stack allowances). The total iterations completed was 100.
 
 | Language | Average | Min | Max |
@@ -87,3 +87,7 @@ Acknowledgements
 ----------------
 
 I would like to give mention to the (Crafting Interpreters)[https://craftinginterpreters.com/] book. This helped cement a solid foundation for Nucleus, and gave tremendous insight into the creation of C based interpreters.
+
+License
+-------
+MIT: https://rem.mit-license.org
