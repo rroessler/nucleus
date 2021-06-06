@@ -65,7 +65,7 @@ reaction fib(n) {
 Performance Tests
 -----------------
 
-### Ackermann Function (see: https://en.wikipedia.org/wiki/Ackermann_function)
+### [Ackermann Function](https://en.wikipedia.org/wiki/Ackermann_function)
 This performance test worked around stress testing function calls with the recursive Ackermann Function. The test was conducted with `ack(3, 6)` as Python cannot compute much higher than this (exceeded max stack allowances). The total iterations completed was 100.
 
 | Language | Average | Min | Max |
@@ -90,4 +90,4 @@ I would like to give mention to the (Crafting Interpreters)[https://craftinginte
 
 License
 -------
-MIT: (link)[https://opensource.org/licenses/MIT]
+MIT: [link](https://opensource.org/licenses/MIT)
