@@ -1,0 +1,15 @@
+# Fibonnaci Recursion in Nucleus
+reaction fib(n) {
+    if (n < 2) return n;
+    return fib(n - 2) + fib(n - 1);
+}
+
+const N = 30; # set an input
+const t_start = std.time.clock(); # time in us
+
+# compute and save result
+const res = fib(N);
+
+# and display the results
+std.print("Elapsed Time: ", (std.time.clock() - t_start) / 1000, "ms");
+std.print("Result: ", res);

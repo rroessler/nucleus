@@ -9,6 +9,8 @@
 
 // forward declaration
 static void modelThis(bool canAssign);
+static void modelSuper(bool canAssign);
+static void reaction(ReactionType type);
 
 /** Parses a "number" constant. */
 static void number(bool canAssign) {
@@ -32,14 +34,54 @@ static void literal(bool canAssign) {
     }
 }
 
+/** Parses and compiles a base model method. */
+static void baseModel_method() {
+    uint8_t constant = identifierConstant(&parser.previous);
+    reaction(RT_REACTION);  // will be a default reaction
+    EMIT_SHORT(OP_SET_BASE_PROPERTY, constant);
+}
+
+/** Parses and compiles a base model field. */
+static void baseModel_field() {
+    uint8_t constant = identifierConstant(&parser.previous);
+    advance();     // eat the colon
+    expression();  // and the expression
+    consume(T_SEMICOLON, "Expected ';' after field declaration.");
+    EMIT_SHORT(OP_SET_BASE_PROPERTY, constant);
+}
+
 /** Parses an inline model set by "{}"" */
-static void model(bool canAssign) {
+static void baseModel(bool canAssign) {
     // call to get the base model object
     Token token = syntheticToken(T_IDENTIFIER, "BaseModel");
-    EMIT_SHORT(OP_GET_GLOBAL, identifierConstant(&token));
+    uint8_t global = identifierConstant(&token);
+    EMIT_SHORT(OP_GET_GLOBAL, global);
     EMIT_SHORT(OP_CALL, 0);  // and call with ZERO arguments
+
+    while (!check(T_RIGHT_BRACE) && !check(T_EOF)) {
+        consume(T_IDENTIFIER, "Expecting a object method/field.");
+        switch (parser.current.type) {
+            case T_LEFT_PAREN:  // method
+                baseModel_method();
+                break;
+
+            case T_COLON:  // field
+                baseModel_field();
+                break;
+
+            default:  // bad token
+                errorAtCurrent("Unknown symbol found in model declaration.");
+                return;
+        }
+
+        // and pop item on the stack
+        emitByte(OP_POP);
+    }
 
     consume(T_RIGHT_BRACE, "Expected '}' after base object model body.");
 }
+
+/** Parses and compiles an prefix reaction. */
+static void inlineReaction(bool canAssign) { reaction(RT_REACTION); }
 
 #endif

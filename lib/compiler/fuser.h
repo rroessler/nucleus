@@ -48,6 +48,7 @@ typedef struct Fuser {
 /** Model Compiler Structure (fixes global "this" references) */
 typedef struct ModelFuser {
     struct ModelFuser* enclosing;
+    bool hasBaseModel;
 } ModelFuser;
 
 /** Set a global current Compiler */
@@ -116,6 +117,32 @@ static void modelThis(bool canAssign) {
     // and parse as a variable
     emitByte(OP_MUTATE);  // want "this" to be mutable
     variable(false);
+}
+
+/** Parses a model "super" reference */
+static void modelSuper(bool canAssign) {
+    // error checking
+    if (currentModel == NULL) {
+        error("Cannot use 'super' keyword outside of a model.");
+    } else if (!currentModel->hasBaseModel) {
+        error("Cannot user 'super' keyword in a model with no base.");
+    }
+
+    consume(T_PERIOD, "Expected a period after \"super\" keyword.");
+    consume(T_IDENTIFIER, "Expected parent model method name.");
+    uint8_t name = identifierConstant(&parser.previous);
+
+    // start the super call
+    namedVariable(syntheticToken(T_THIS, "this"), false, false);
+    if (match(T_LEFT_PAREN)) {
+        uint8_t argCount = argumentList();
+        namedVariable(syntheticToken(T_SUPER, "super"), false, false);
+        EMIT_SHORT(OP_SUPER_INVOKE, name);
+        emitByte(argCount);
+    } else {
+        namedVariable(syntheticToken(T_SUPER, "super"), false, false);
+        EMIT_SHORT(OP_GET_SUPER, name);
+    }
 }
 
 /********************

@@ -156,13 +156,13 @@ static void atomizer_resetStack() {
  * Pushes a particle value to the Atomizer stack.
  * @param value             Particle to push.
  */
-void atomizer_push(Particle value) {
+static inline void atomizer_push(Particle value) {
     *atomizer.stackTop = value;
     atomizer.stackTop++;
 }
 
 /** Pops the top particle value from the Atomizer stack. */
-Particle atomizer_pop() {
+static inline Particle atomizer_pop() {
     atomizer.stackTop--;
     return *atomizer.stackTop;
 }
@@ -198,15 +198,16 @@ static bool atomizer_checkFlag(uint32_t flag) { return (atomizer.flags & flag) !
  * Peeks a value at a given distance on the stack.
  * @param distance          Distance of item from top of stack.
  */
-static Particle atomizer_peek(int distance) { return atomizer.stackTop[-1 - distance]; }
+static inline Particle atomizer_peek(int distance) { return atomizer.stackTop[-1 - distance]; }
 
 /******************
  *  ATOMIZER API  *
  ******************/
 
 // additional atomizer API, forward declared
+#include "_math.h"
+#include "call.h"
 #include "gc.h"
-#include "math.h"
 #include "stdlib.h"
 
 /** Initialises the Atomizer Instance */
@@ -257,7 +258,8 @@ static void atomizer_runtimeError(const char* format, ...) {
     va_end(args);
     fputs("\n", stderr);
 
-    for (int i = atomizer.frameCount - 1; i >= 0; i--) {
+    int endFrame = atomizer.frameCount > 5 ? (atomizer.frameCount - 5) : 0;
+    for (int i = atomizer.frameCount - 1; i >= endFrame; i--) {
         CallFrame* frame = &atomizer.frames[i];
         ObjReaction* reac = frame->closure->reac;
         size_t inst = frame->ip - reac->chunk.code - 1;
@@ -288,129 +290,9 @@ static void atomizer_runtimeError(const char* format, ...) {
     atomizer_resetStack();
 }
 
-/**
- * Coordinates a atomizer call routine.
- * @param closure           Closure to call.
- * @param argCount          Number of arguments given.
- */
-static bool atomizer_call(ObjClosure* closure, int argCount) {
-    // make sure number of reactions is valid
-    if (argCount < closure->reac->arity - closure->reac->defaults) {  // not enough
-        atomizer_runtimeError("Expected at least %d arguments for reaction call but got %d.", closure->reac->arity, argCount);
-        return false;
-    } else if (argCount > closure->reac->arity) {  // to many
-        atomizer_runtimeError("Expected at most %d arguments for reaction call but got %d.", closure->reac->arity, argCount);
-        return false;
-    }
-
-    // and that we also haven't exceeded the maximum number of frames
-    if (atomizer.frameCount == FRAMES_MAX) {
-        atomizer_runtimeError("Stack overflow!");
-        return false;
-    }
-
-    CallFrame* frame = &atomizer.frames[atomizer.frameCount++];
-    frame->closure = closure;
-    frame->ip = closure->reac->chunk.code;
-    frame->slots = atomizer.stackTop - argCount - 1;
-    frame->slotCount = argCount;  // and create a frame with a slot count equal to args
-    return true;
-}
-
-/**
- * Sets a current reaction to be called.
- * @param callee            Particle calling reaction.
- * @param argCount          Number of arguments given.
- */
-static bool atomizer_callValue(Particle callee, int argCount) {
-    if (IS_OBJ(callee)) {  // type checking
-        switch (OBJ_TYPE(callee)) {
-            case OBJ_NATIVE: {
-                NativeRn native = AS_NATIVE(callee);
-                Particle result = native(argCount, atomizer.stackTop - argCount);
-                atomizer.stackTop -= argCount + 1;
-                PUSH(result);
-                return true;
-            }
-
-            case OBJ_CLOSURE:  // call similarly to reaction
-                return atomizer_call(AS_CLOSURE(callee), argCount);
-
-            case OBJ_MODEL: {
-                // create the new instance
-                ObjModel* model = AS_MODEL(callee);
-                atomizer.stackTop[-argCount - 1] =
-                    model->unstable
-                        ? NUC_OBJ_MUTABLE(model_newInstance(model))
-                        : NUC_OBJ(model_newInstance(model));
-
-                // and invoke the constructor
-                Particle constructor;
-                if (table_get(&model->methods, atomizer.initString, &constructor)) {
-                    return atomizer_call(AS_CLOSURE(constructor), argCount);
-                } else if (argCount != 0) {
-                    atomizer_runtimeError("Expected 0 arguments for model without constructor.");
-                    return false;
-                }
-
-                return true;
-            }
-
-            case OBJ_BOUND_METHOD: {
-                ObjBoundMethod* bound = AS_BOUND_METHOD(callee);
-                atomizer.stackTop[-argCount - 1] = bound->receiver;
-                return atomizer_call(bound->method, argCount);
-            }
-
-            default:  // otherwise non-callable
-                break;
-        }
-    }
-
-    atomizer_runtimeError("Can only call reactions.");
-    return false;  // failed
-}
-
-/**
- * Defines a fieldfor a model implementation.
- * @param name              Name of field to define.
- */
-static void atomizer_defineField(ObjString* name) {
-    Particle field = atomizer_peek(0);
-    ObjModel* model = AS_MODEL(atomizer_peek(1));
-    table_set(&model->defaults, name, field);
-    POP();
-}
-
-/**
- * Defines a method for a model implementation.
- * @param name              Name of method to define.
- */
-static void atomizer_defineMethod(ObjString* name) {
-    Particle method = atomizer_peek(0);
-    ObjModel* model = AS_MODEL(atomizer_peek(1));
-    table_set(&model->methods, name, method);
-    POP();
-}
-
-/**
- * Binds a method to global / local variable outside of the models scope.
- * @param model             Model of method.
- * @param name              Name of model method.
- */
-static bool atomizer_bindMethod(ObjModel* model, ObjString* name) {
-    Particle method;
-    if (!table_get(&model->methods, name, &method)) {  // if fails then let user know
-        atomizer_runtimeError("Tried accessing undefined property \"%s\".", name->chars);
-        return false;
-    }
-
-    // and define as a bound method
-    ObjBoundMethod* bound = model_newBoundMethod(atomizer_peek(0), AS_CLOSURE(method));
-    POP();                 // pop the class instance
-    PUSH(NUC_OBJ(bound));  // and push the method
-    return true;
-}
+/******************
+ *  MAIN METHODS  *
+ ******************/
 
 /**
  * Disrupts the atomization if a particle is immutable and there was an attempt
@@ -418,7 +300,7 @@ static bool atomizer_bindMethod(ObjModel* model, ObjString* name) {
  * @param value             Particle to check.
  */
 #define NUC_DISRUPT_IF_IMMUTABLE(value)                                    \
-    if (!value.mutable) {                                                  \
+    if (!IS_MUTABLE(value)) {                                              \
         if (!atomizer_checkFlag(NUC_AFLAG_NEXT_SET_MUTABLE)) {             \
             atomizer_runtimeError("Cannot modify an immutable particle."); \
             return ASTATE_RUNTIME_UNSTABLE;                                \
@@ -608,12 +490,34 @@ static ATOMIC_STATE quantize() {
             case OP_MODEL: {
                 PUSH(NUC_OBJ(model_new(READ_STRING(), NUC_MODEL_STABLE)));
             } break;
+            case OP_INHERIT: {
+                Particle base = atomizer_peek(1);
+
+                // and make sure we have a model
+                if (!IS_MODEL(base)) {
+                    atomizer_runtimeError("Parent model must be a a model.");
+                    return ASTATE_RUNTIME_UNSTABLE;
+                }
+
+                ObjModel* subModel = AS_MODEL(atomizer_peek(0));
+                table_addAll(&AS_MODEL(base)->methods, &subModel->methods);
+                table_addAll(&AS_MODEL(base)->defaults, &subModel->defaults);
+                POP();  // remove the subModel
+            } break;
             case OP_METHOD:
                 atomizer_defineMethod(READ_STRING());
                 break;
             case OP_FIELD:
                 atomizer_defineField(READ_STRING());
                 break;
+            case OP_INVOKE: {
+                ObjString* method = READ_STRING();
+                int argCount = READ_BYTE();
+                if (!atomizer_invoke(method, argCount)) {
+                    return ASTATE_RUNTIME_UNSTABLE;
+                }
+                frame = &atomizer.frames[atomizer.frameCount - 1];
+            } break;
             case OP_GET_PROPERTY: {
                 // for now only allow instances, however LATER, this can be extended to CALL
                 // internal object properties/methods (eg: ".toString()" for numbers)
@@ -643,6 +547,7 @@ static ATOMIC_STATE quantize() {
                     PUSH(NUC_NULL);
                 }
             } break;
+            case OP_SET_BASE_PROPERTY:
             case OP_SET_PROPERTY: {
                 // inversely, ONLY instances will be allowed to have properties set
                 if (!IS_INSTANCE(atomizer_peek(1))) {
@@ -658,9 +563,26 @@ static ATOMIC_STATE quantize() {
                 if (!table_set(&inst->model->defaults, accessor, atomizer_peek(0))) {
                     table_set(&inst->fields, accessor, atomizer_peek(0));
                 }
-                Particle value = POP();
-                POP();
-                PUSH(value);
+
+                // and only want to do below if desired
+                if (*frame->ip == OP_SET_PROPERTY) {
+                    Particle value = POP();
+                    POP();
+                    PUSH(value);
+                }
+            } break;
+            case OP_GET_SUPER: {
+                ObjString* name = READ_STRING();
+                ObjModel* base = AS_MODEL(POP());
+
+                if (!atomizer_bindMethod(base, name)) return ASTATE_RUNTIME_UNSTABLE;
+            } break;
+            case OP_SUPER_INVOKE: {
+                ObjString* method = READ_STRING();
+                int argCount = READ_BYTE();
+                ObjModel* base = AS_MODEL(POP());
+                if (!atomizer_invokeFromModel(base, method, argCount)) return ASTATE_RUNTIME_UNSTABLE;
+                frame = &atomizer.frames[atomizer.frameCount - 1];
             } break;
 
             /** Atomizer Specific Operations */
@@ -674,7 +596,11 @@ static ATOMIC_STATE quantize() {
             } break;
             case OP_SET_IMMUTABLE: {
                 Particle value = POP();
+#ifdef NUC_NAN_BOXING
+
+#else
                 value.mutable = false;
+#endif
                 PUSH(value);
             } break;
             case OP_GET_GLOBAL: {
@@ -707,7 +633,7 @@ static ATOMIC_STATE quantize() {
             } break;
             case OP_GET_LOCAL: {  // save a local variable to the top of the stack
                 uint8_t slot = READ_BYTE();
-                if (slot > frame->slotCount) {
+                if (slot > atomizer.stackTop - atomizer.stack) {
                     PUSH(NUC_NULL);  // this is to SOLIDIFY exceeding the total slots
                 } else {
                     PUSH(frame->slots[slot]);
@@ -717,7 +643,6 @@ static ATOMIC_STATE quantize() {
                 uint8_t slot = READ_BYTE();
                 NUC_DISRUPT_IF_IMMUTABLE(atomizer_peek(0));
                 frame->slots[slot] = atomizer_peek(0);
-                if (slot > frame->slotCount) frame->slotCount++;
             } break;
             case OP_GET_UPVALUE: {
                 uint8_t slot = READ_BYTE();
@@ -763,6 +688,8 @@ static ATOMIC_STATE quantize() {
  * @param source                Nucleus source code to run.
  */
 ATOMIC_STATE atomize(const char* source) {
+    nuc_initRandom();  // initially seed random numbers
+
     ObjReaction* reac = fuse(source);
     if (reac == NULL) return ASTATE_COMPILE_UNSTABLE;
 

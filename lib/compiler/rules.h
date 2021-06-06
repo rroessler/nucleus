@@ -17,7 +17,7 @@ ParseRule rules[] = {
     // punctuation
     [T_LEFT_PAREN] = {grouping, call, P_CALL},
     [T_RIGHT_PAREN] = {NULL, NULL, P_NONE},
-    [T_LEFT_BRACE] = {model, NULL, P_NONE},
+    [T_LEFT_BRACE] = {baseModel, NULL, P_NONE},
     [T_RIGHT_BRACE] = {NULL, NULL, P_NONE},
     [T_COMMA] = {NULL, NULL, P_NONE},
     [T_PERIOD] = {NULL, accessor, P_CALL},
@@ -58,11 +58,11 @@ ParseRule rules[] = {
     // type based tokens
     [T_LET] = {NULL, NULL, P_NONE},
     [T_MODEL] = {NULL, NULL, P_NONE},
-    [T_REACTION] = {NULL, NULL, P_NONE},
+    [T_REACTION] = {inlineReaction, NULL, P_NONE},
 
     // model based
     [T_THIS] = {modelThis, NULL, P_NONE},
-    [T_SUPER] = {NULL, NULL, P_NONE},
+    [T_SUPER] = {modelSuper, NULL, P_NONE},
 
     // library accessors
     [T_STDLIB] = {NULL, NULL, P_NONE},

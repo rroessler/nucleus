@@ -13,9 +13,10 @@
  * Coerces a particle as a false value. 
  * @param value             Value to check if falsey
  */
-static bool particle_isFalsey(Particle value) {
-    if (IS_NUMBER(value)) return AS_NUMBER(value) == 0;
-    return IS_NULL(value) || (IS_BOOL(value) && !AS_BOOL(value));
+static inline bool particle_isFalsey(Particle value) {
+    return IS_NUMBER(value)
+               ? (AS_NUMBER(value) == 0)
+               : (IS_NULL(value) || (IS_BOOL(value) && !AS_BOOL(value)));
 }
 
 /** 
@@ -24,6 +25,10 @@ static bool particle_isFalsey(Particle value) {
  * @param b                 Particle B.
  */
 bool particle_isEqual(Particle a, Particle b) {
+#ifdef NUC_NAN_BOXING
+    if (IS_NUMBER(a) && IS_NUMBER(b)) return AS_NUMBER(a) == AS_NUMBER(b);
+    return a == b;
+#else
     if (a.type != b.type) return false;  // not the same type
     switch (a.type) {
         case TYPE_BOOL:
@@ -37,6 +42,7 @@ bool particle_isEqual(Particle a, Particle b) {
         default:  // unreachable
             return false;
     }
+#endif
 }
 
 #endif

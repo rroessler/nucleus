@@ -1,0 +1,31 @@
+# Nucleus implementation of the Ackermann Function
+reaction ack(m, n) {
+    if (m == 0) return n + 1;
+    if ((m > 0) && (n == 0)) return ack(m - 1, 1);
+    if ((m > 0) && (n > 0)) return ack(m - 1, ack(m, n - 1));
+}
+
+# Bench marking method to collate 100 results
+reaction bench(iters) {
+    let min = 1000000;
+    let sum = 0;
+    let max = 0;
+
+    for (let i : 0, iters) {
+        const t_start = std.time.clock(); # time in us
+        ack(3, 6); # compute the ackermann function
+        const t_duration = (std.time.clock() - t_start) / 1000;
+
+        sum = sum + t_duration;
+        if (t_duration < min) min = t_duration;
+        if (t_duration > max) max = t_duration;
+    }
+
+    std.print("Average: ", sum / iters, "ms");
+    std.print("Min: ", min, "ms");
+    std.print("Max: ", max, "ms");
+}
+
+std.print("=> Nucleus");
+bench(100);
+std.print();

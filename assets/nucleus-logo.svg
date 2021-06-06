@@ -1,0 +1,14 @@
+<svg width="278" height="310" xmlns="http://www.w3.org/2000/svg">
+
+ <g>
+  <title>Layer 1</title>
+  <ellipse stroke-width="10" ry="150" rx="65" id="svg_1" cy="155" cx="139" stroke="#426373" fill="#fff"/>
+  <ellipse transform="rotate(120 139 155)" stroke-width="10" ry="150" rx="65" id="svg_2" cy="155" cx="139" stroke="#426373" fill="none"/>
+  <ellipse transform="rotate(-120 139 155)" stroke-width="10" ry="150" rx="65" id="svg_3" cy="155" cx="139" stroke="#426373" fill="none"/>
+  <ellipse ry="30" rx="30" id="svg_4" cy="155" cx="139" stroke-width="10" stroke="#426373" fill="#222222"/>
+  <ellipse ry="14" rx="14" id="svg_5" cy="65.11236" cx="190" stroke-width="10" stroke="#ffffff" fill="#ffffff"/>
+  <ellipse ry="14" rx="14" id="svg_10" cy="244.88765" cx="85" stroke-width="10" stroke="#ffffff" fill="#ffffff"/>
+  <ellipse ry="6" rx="6" id="svg_11" cy="244.54751" cx="85.06742" stroke-width="10" stroke="#222222" fill="#222222"/>
+  <ellipse ry="6" rx="6" id="svg_12" cy="65" cx="190" stroke-width="10" stroke="#222222" fill="#222222"/>
+ </g>
+</svg>

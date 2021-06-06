@@ -47,9 +47,14 @@ typedef enum {
     // model based items
     OP_MODEL,
     OP_METHOD,
+    OP_INVOKE,
+    OP_INHERIT,
     OP_FIELD,
+    OP_GET_SUPER,
+    OP_SUPER_INVOKE,
     OP_GET_PROPERTY,
     OP_SET_PROPERTY,
+    OP_SET_BASE_PROPERTY,
 
     // directives
     OP_MUTATE,

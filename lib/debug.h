@@ -63,6 +63,21 @@ static int nuc_printByteInstruction(const char* name, Chunk* chunk, int offset) 
 }
 
 /**
+ * Prints a invoker instruction.
+ * @param name                  Name of instruction.
+ * @param chunk                 Chunk of byte instruction.
+ * @param offset                Current offset.
+ */
+static int nuc_printInvokeInstruction(const char* name, Chunk* chunk, int offset) {
+    uint8_t constant = chunk->code[offset + 1];
+    uint8_t argCount = chunk->code[offset + 2];
+    printf("%-*s \x1b[2;33m%4d\x1b[0m \x1b[2m|\x1b[0m ", PRINT_OP_PAD_LEN, name, constant);
+    particle_print(chunk->constants.values[constant], true);
+    printf(" : (\x1b[33m%d\x1b[0m args)\n", argCount);
+    return offset + 3;
+}
+
+/**
  * Disassembles a given chunk instruction at set offset.
  * @param chunk                     Chunk to disassemble instruction of.
  * @param offset                    Offset of instruction.
@@ -98,6 +113,10 @@ int nuc_disassembleInstruction(Chunk* chunk, int offset, const char* prompt) {
     case op:                \
         return nuc_printJumpInstruction(name, 1, chunk, offset)
 
+#define CASE_INVOKE(op, name) \
+    case op:                  \
+        return nuc_printInvokeInstruction(name, chunk, offset)
+
     // and now print the instruction
     uint8_t inst = chunk->code[offset];
     switch (inst) {
@@ -132,10 +151,15 @@ int nuc_disassembleInstruction(Chunk* chunk, int offset, const char* prompt) {
 
         /** Model Operations */
         CASE_CONSTANT(OP_MODEL, "\x1b[33mOP_MODEL\x1b[0m");
+        CASE_SIMPLE(OP_INHERIT, "\x1b[33mOP_INHERIT\x1b[33m");
         CASE_CONSTANT(OP_METHOD, "\x1b[33mOP_METHOD\x1b[0m");
+        CASE_INVOKE(OP_INVOKE, "\x1b[33mOP_INVOKE\x1b[0m");
         CASE_CONSTANT(OP_FIELD, "\x1b[33mOP_FIELD\x1b[0m");
         CASE_CONSTANT(OP_GET_PROPERTY, "\x1b[33mOP_GET_PROPERTY\x1b[0m");
         CASE_CONSTANT(OP_SET_PROPERTY, "\x1b[33mOP_SET_PROPERTY\x1b[0m");
+        CASE_CONSTANT(OP_SET_BASE_PROPERTY, "\x1b[33mOP_SET_BASE_PROPERTY\x1b[0m");
+        CASE_CONSTANT(OP_GET_SUPER, "\x1b[33mOP_GET_SUPER\x1b[0m");
+        CASE_INVOKE(OP_SUPER_INVOKE, "\x1b[33mOP_SUPER_INVOKE\x1b[0m");
 
         /** Library Operations */
         CASE_SIMPLE(OP_PRINT, "\x1b[3;32mOP_PRINT\x1b[0m");

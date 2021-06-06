@@ -1,38 +1,86 @@
-# &#x269B; Nucleus
-Nucleus is a bytecode driven programming language initially developed to be a learning experience for myself in creating my own language from scratch. Much of the internal workings of Nucleus stems from the [crafting-interpreters](https://craftinginterpreters.com/) book, which has been an excellent resource for building a solid foundation for Nucleus. 
+<div align="center">
 
-The main goals, a solidly reliable scripting language that aims to have a (decently) rich native library, break some of the norms of traditional language lexicology, define better interoperability between dynamic typings, and be easily accesible. More on these goals can be found below.
+Nucleus
+=======
 
-## Quick Start
-Currently Nucleus is still in development and as such is only accessible through manually building.
+---
 
-## Primary Goals
-- Solid, reliable scripting language.
-- Rich (decently) native library.
-- Break some traditional norms for lexicology and some syntax.
-- Define better interoperability between dynamic typings.
-- Easily accesible.
+<img src="./assets/nucleus-logo.svg">
+Nucleus is a dynamic, bytecode driven programming language.
 
-## Roadmap
-#### Language Features
-| Goal | Status | Notes |
-|:-:|:-:|-|
-| Primatives | Complete | [See Here]() |
-| Control | Complete | [See Here]() |
-| Reactions | Complete | [See Here]() |
-| Models | In Progress | Currently implementing superclasses and base model declaration. |
-| Modifiers | In Progress | At this stage only `const` has been implemented, but needs some further clarification to use. |
-| Directives | To Do | Only <code>@<span>mutate</span></code> has been implemented to allow for `const` variable mutation.  |
-| Standard Library | Ongoing | For now simple items have been created for ease of testing Nucleus. |
-| Math Library | To Do | These methods will aim to implement most typical math functionality as expected, but also extra if possible. |
-| Primatives/Model Methods | To Do | These will be methods that can be invoked by primatives/models directly relating to their base particle. |
+---
 
-#### Accessibility
-| Goal | Status | Notes |
-|:-:|:-:|-|
-| Node Addon | To Do | This will be implementing the runtime and compiler into a Node Addon. This is primarily a stepping stone to a simple CLI and bundlable executable. |
-| CLI | To Do | Will be able to conduct a REPL, and run Nucleus files from the command line. |
-| Cross-Platform | To Do | Since this project is being written in C, the aim is to have the runtime compilable for all devices. Additionally, some small focus will be kept for smaller embedded device implementation. |
+Features
+--------
 
-## License
-See [LICENSE-MIT](https://github.com/electron/electron/blob/main/LICENSE) for details.
+- Lightness: The binary currently compiles to under 150kB.
+- Easily Accessible: Plans will be to integrate Nucleus via WASM and a Node.js run CLI.
+
+Primary Goals
+-------------
+
+- Reliability: Nucleus aims to work consistently and expectedly.
+- Dynamic Stability: Better interoperability between dynamic types is a must.
+- Rich Native Library: For faster and efficient programs, native reaction calls in C are a must.
+
+Quick Start
+-----------
+
+At this stage the Nucleus project can only be compiled from source. The only tool required to do this currenty do this is either "gcc" or "clang". Other setups have not been tested, however "MinGW" and "MSCV" should work. Additionally Git will be required to clone this repo.
+
+```bash
+git clone https://github.com/rroessler/nucleus.git
+cd nucleus
+gcc -O3 -g "./src/nucleus.h" -o "./nucleus.exe"
+```
+
+The binary can then be run in two modes, REPL and File. The REPL can be invoked by calling `./nucleus.exe` with no arguments and ".nuc" files can be executed by calling `./nucleus.exe filename`.
+
+Documentation
+-------------
+
+Documentation for Nucleus is currently incomplete.
+
+Quick Examples
+--------------
+
+**Hello World:**
+
+```nucleus
+std.print("Hello, World!");   # I am a comment :)
+```
+
+**Fibonacci:**
+
+```nucleus
+reaction fib(n) {
+    if (n < 2) return n;
+    return fib(n - 2) + fib(n - 1);
+}
+```
+
+Performance Tests
+-----------------
+
+### (Ackermann Function)[https://en.wikipedia.org/wiki/Ackermann_function]
+This performance test worked around stress testing function calls with the recursive Ackermann Function. The test was conducted with `ack(3, 6)` as Python cannot compute much higher than this (exceeded max stack allowances). The total iterations completed was 100.
+
+| Language | Average | Min | Max |
+|:--------:|:-------:|:---:|:---:|
+| **JavaScript** | 1.297ms | 1.092ms | 3.416ms |
+| **Python** | 23.473ms | 20.674ms | 27.526ms |
+| **Nucleus** | 10.846ms | 10.023ms | 12.968ms |
+
+### Vector Norm (Native Math Calls)
+This performance conversly worked on native `math` calls, in particular `math.sqrt` for Nucleus. Additionally, the vector norm method was doubly iterated over to get times for 100000 calls of `vecNorm`.
+
+| Language | Average | Min | Max |
+|:--------:|:-------:|:---:|:---:|
+| **JavaScript** | 0.119ms | 0.045ms | 2.945ms |
+| **Python** | 28.903ms | 26.257ms | 32.302ms |
+| **Nucleus** | 11.254ms | 10.007ms | 13.068ms |
+
+Acknowledgements
+----------------
+
+I would like to give mention to the (Crafting Interpreters)[https://craftinginterpreters.com/] book. This helped cement a solid foundation for Nucleus, and gave tremendous insight into the creation of C based interpreters.

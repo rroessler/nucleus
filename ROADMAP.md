@@ -1,0 +1,77 @@
+Roadmap
+=======
+
+- [ ] Primatives
+    - [ ] Numeric Literals
+        - [x] Decimal
+        - [x] Float
+        - [x] Hex
+        - [x] Binary
+        - [x] Octal
+        - [ ] Scientific
+    - [ ] String Literals
+        - [x] ASCII
+        - [ ] Unescaped Chars
+    - [x] Boolean
+    - [x] NULL
+    - [x] Model
+        - [x] Inline Object Definitions
+        - [x] Base Model Declaration
+        - [x] Derived Model Declaration
+    - [ ] Array
+    - [ ] Primative Builtin Methods
+        - [ ] Numeric
+        - [ ] String
+        - [ ] Model
+        - [ ] Array
+    - [ ] Modifiers
+        - [x] let
+        - [ ] const (needs polishing)
+- [x] Flow Control Operations
+    - [x] Reaction Calls (Functions)
+    - [x] Anonymous Reactions
+    - [x] `if` / `else`
+    - [ ] `for` loop w Custom Operators
+    - [x] `do` / `repif` loops (do while / while)
+- [ ] Builtin Operators
+    - [ ] Basic
+        - [x] +
+        - [x] -
+        - [x] *
+        - [x] /
+        - [ ] %
+        - [ ] **
+    - [x] Unary
+        - [x] !
+        - [x] -
+    - [x] Comparison
+        - [x] ==
+        - [x] !=
+        - [x] <=
+        - [x] <
+        - [x] >=
+        - [x] >
+        - [x] &&
+        - [x] ||
+    - [ ] Bitwise
+        - [ ] &
+        - [ ] |
+        - [ ] <<
+        - [ ] >>
+        - [ ] ^
+        - [ ] ~
+- [ ] Directives
+    - [x] @mutate
+    - [x] @construct
+    - [ ] ...
+- [ ] Native Libraries
+    - [ ] `std.print`
+    - [x] `math`
+    - [ ] `std.rand`
+    - [ ] ...
+- [ ] Runtime Optimizations
+    - [ ] Lazy Loading Natives
+    - [ ] NaN Boxing with Mutability
+- [ ] Error Disruptions / Resolving
+- [ ] Module Implementation
+- [ ] Documentation

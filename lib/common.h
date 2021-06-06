@@ -8,7 +8,11 @@
 // max 8-bit count = 256
 #define UINT8_COUNT (UINT8_MAX + 1)
 
-#define NUC_DEBUG_PRINT_CODE
+// optimizations
+#define NUC_NAN_BOXING
+
+// #define NUC_DEBUG_PRINT_LOADERS
+// #define NUC_DEBUG_PRINT_CODE
 // #define NUC_DEBUG_TRACE_EXECUTION
 // #define NUC_DEBUG_LOG_GC
 

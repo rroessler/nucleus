@@ -28,11 +28,74 @@ static ObjString* objString_alloc(char* chars, int length, uint32_t hash) {
 }
 
 /**
- * Creates a string object from given series of characters.
- * @param chars             Chars to convert to string object.
+ * Unescapes a given input string.
+ * @param chars             String to unescape.
  * @param length            Length of input string.
  */
-ObjString* objString_copy(const char* chars, int length) {
+static const char* objString_unescape(const char* chars, int* length) {
+    // switch case helper
+#define CASE_UNESCAPE(c, hex)       \
+    case c:                         \
+        strncat(unescaped, hex, 1); \
+        newLen++;                   \
+        break
+
+    char* unescaped = ALLOCATE(char, *length + 1);  // set a placeholder for the output
+    int newLen = 0;                                 // and also a new length
+    for (int i = 0; i < *length; i++) {
+        if (chars[i] != '\\') {
+            strncat(unescaped, &chars[i], 1);
+            newLen++;
+            continue;
+        }
+
+        // otherwise found a string escape sequence
+        switch (chars[++i]) {
+            CASE_UNESCAPE('a', "\a");
+            CASE_UNESCAPE('b', "\b");
+            CASE_UNESCAPE('e', "\e");
+            CASE_UNESCAPE('f', "\f");
+            CASE_UNESCAPE('n', "\n");
+            CASE_UNESCAPE('r', "\r");
+            CASE_UNESCAPE('t', "\t");
+            CASE_UNESCAPE('v', "\v");
+            CASE_UNESCAPE('\\', "\\");
+            CASE_UNESCAPE('\'', "\'");
+            CASE_UNESCAPE('"', "\"");
+            CASE_UNESCAPE('?', "\?");  // single char escape sequences
+
+            case 'x': {  // byte escape
+                const char* start = &chars[++i];
+                i++;  // waste a char for 1-byte width
+                long byte = strtol(start, NULL, 16);
+                strncat(unescaped, (char*)&byte, 1);
+                newLen++;  // and increment the length by 1
+            } break;
+
+            default:  // ignore the other items for now
+                error("Found an invalid escape sequence character.");
+                break;
+        }
+    }
+
+    // if same length, ignore change
+    if (newLen == *length) return chars;
+
+    length = &newLen;  // modify the length value
+    unescaped = (char*)realloc(unescaped, newLen + 1);
+    unescaped[newLen] = '\0';
+    return unescaped;  // and return the unescaped string
+}
+
+/**
+ * Creates a string object from given series of characters.
+ * @param input             Chars to convert to string object.
+ * @param inLen             Length of input string.
+ */
+ObjString* objString_copy(const char* input, int inLen) {
+    // want to initially UNESCAPE an input string
+    int length = inLen;
+    const char* chars = objString_unescape(input, &length);
     uint32_t hash = strings_hash(chars, length);
 
     // if a string intern is found, return it instead

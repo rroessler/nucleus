@@ -34,6 +34,10 @@ static void accessor(bool canAssign) {
     if (canAssign && match(T_EQUAL)) {
         expression();
         EMIT_SHORT(OP_SET_PROPERTY, name);
+    } else if (match(T_LEFT_PAREN)) {
+        uint8_t argCount = argumentList();
+        EMIT_SHORT(OP_INVOKE, name);
+        emitByte(argCount);
     } else {
         EMIT_SHORT(OP_GET_PROPERTY, name);
     }

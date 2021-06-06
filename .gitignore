@@ -4,6 +4,7 @@ nucleus.exe.dSYM
 
 # ignoring output files
 nucleus.exe
+examples/main.nuc
 
 # ignoring archived tests
 __archive

@@ -41,8 +41,24 @@ static void modelDeclaration() {
 
     // and set as a new model fuser
     ModelFuser modelFuser;
+    modelFuser.hasBaseModel = false;
     modelFuser.enclosing = currentModel;
     currentModel = &modelFuser;
+
+    // and check for model derivations
+    if (match(T_DERIVES)) {
+        consume(T_IDENTIFIER, "Expected base model name.");
+        variable(false);
+        if (areIdentifiersEqual(&modelName, &parser.previous)) error("A model cannot inherit from itself.");
+
+        fuser_beginScope();
+        fuser_addLocal(syntheticToken(T_IDENTIFIER, "super"));
+        defineVariable(0, false);
+
+        namedVariable(modelName, false, false);
+        emitByte(OP_INHERIT);
+        modelFuser.hasBaseModel = true;
+    }
 
     // bring the class to the top of the stack
     namedVariable(modelName, false, true);
@@ -62,7 +78,7 @@ static void modelDeclaration() {
 
             default:  // bad token
                 errorAtCurrent("Unknown symbol found in model declaration.");
-                break;
+                return;
         }
     }
 
@@ -70,6 +86,8 @@ static void modelDeclaration() {
     consume(T_RIGHT_BRACE, "Expected '}' after model body.");
     consume(T_SEMICOLON, "Expected ';' after model declaration.");
     emitByte(OP_POP);  // and pop class off the stack
+
+    if (modelFuser.hasBaseModel) fuser_endScope();
 
     // and remove top reference of model fuser
     currentModel = currentModel->enclosing;
