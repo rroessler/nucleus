@@ -5,10 +5,13 @@ Nucleus
 
 ---
 
-<img src="./assets/nucleus-logo.svg">
+<img width="100px" src="./assets/nucleus-logo.svg">
+
 Nucleus is a dynamic, bytecode driven programming language.
 
 ---
+    
+</div>
 
 Features
 --------
