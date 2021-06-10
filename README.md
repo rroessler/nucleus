@@ -65,17 +65,27 @@ reaction fib(n) {
 Performance Tests
 -----------------
 
-### Ackermann Function (see: https://en.wikipedia.org/wiki/Ackermann_function)
+### [Ackermann Function](https://en.wikipedia.org/wiki/Ackermann_function)
 This performance test worked around stress testing function calls with the recursive Ackermann Function. The test was conducted with `ack(3, 6)` as Python cannot compute much higher than this (exceeded max stack allowances). The total iterations completed was 100.
+
+<div align="center">
 
 | Language | Average | Min | Max |
 |:--------:|:-------:|:---:|:---:|
 | **JavaScript** | 1.297ms | 1.092ms | 3.416ms |
 | **Python** | 23.473ms | 20.674ms | 27.526ms |
+<<<<<<< HEAD
 | **Nucleus** | 9.626ms | 9.150ms | 11.734ms |
+=======
+| **Nucleus** | 10.846ms | 10.023ms | 12.968ms |
+    
+</div>
+>>>>>>> 70e2805da98e096ff72b6b6b0836ac7b36fa4262
 
 ### Vector Norm (Native Math Calls)
 This performance conversly worked on native `math` calls, in particular `math.sqrt` for Nucleus. Additionally, the vector norm method was doubly iterated over to get times for 100000 calls of `vecNorm`.
+
+<div align="center">
 
 | Language | Average | Min | Max |
 |:--------:|:-------:|:---:|:---:|
@@ -83,11 +93,13 @@ This performance conversly worked on native `math` calls, in particular `math.sq
 | **Python** | 28.903ms | 26.257ms | 32.302ms |
 | **Nucleus** | 8.205ms | 7.870ms | 9.684ms |
 
+</div>
+    
 Acknowledgements
 ----------------
 
-I would like to give mention to the (Crafting Interpreters)[https://craftinginterpreters.com/] book. This helped cement a solid foundation for Nucleus, and gave tremendous insight into the creation of C based interpreters.
+I would like to give mention to the [Crafting Interpreters](https://craftinginterpreters.com/) book. This helped cement a solid foundation for Nucleus, and gave tremendous insight into the creation of C based interpreters.
 
 License
 -------
-MIT: https://rem.mit-license.org
+[MIT](https://opensource.org/licenses/MIT)
