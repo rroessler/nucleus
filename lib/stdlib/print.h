@@ -4,8 +4,11 @@
 // Nucleus Headers
 #include "../particle/print.h"
 
+// FORWARD DECLARATION
+void particle_print(nuc_Particle value, bool prettify);
+
 /** Prints all given Nucleus Values. */
-static inline Particle nuc_std__print(int argCount, Particle* args) {
+static inline nuc_Particle nuc_std__print(int argCount, nuc_Particle* args) {
     if (argCount > 1) {
         for (int i = 0; i < argCount; i++) {
             particle_print(args[i], false);  // do not prettify

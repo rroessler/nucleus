@@ -2,188 +2,46 @@
 #define NUC_FUSER_H
 
 // Nucleus Headers
-#include "../common.h"
-#include "emit.h"
-#include "lexer.h"
-#include "parser.h"
-#include "parsers/constant.h"
-#include "parsers/grouping.h"
-#include "parsers/unary.h"
-#include "precedence.h"
-#include "rules.h"
+#include "core/flags.h"
+#include "global.h"
+#include "lexer/lexer.h"
+#include "parser/declaration/declaration.h"
+#include "parser/parser.h"
 
-// conditional includes
-#ifdef NUC_DEBUG_PRINT_CODE
-    #include "../debug.h"
+#ifdef NUC_DEBUG_BYTECODE  // debug includes
+    #include "../bytecode/debug.h"
 #endif
 
-// forward declarations
-void gc_markObject();
+/*******************
+ *  FUSER METHODS  *
+ *******************/
 
-/*************
- *  GLOBALS  *
- *************/
-
-/** Local variable struct. */
-typedef struct {
-    Token name;
-    int depth;
-    bool isCaptured;
-} Local;
-
-/** Fuser/Compiler Structure */
-typedef struct Fuser {
-    // reaction compilation
-    ObjReaction* reac;
-    ReactionType type;
-    struct Fuser* enclosing;  // to allow for stacked compilers
-
-    // local variable compilation
-    Local locals[UINT8_COUNT];
-    int localCount;
-    Upvalue upvalues[UINT8_COUNT];  // closure compilation
-    int scopeDepth;
-} Fuser;
-
-/** Model Compiler Structure (fixes global "this" references) */
-typedef struct ModelFuser {
-    struct ModelFuser* enclosing;
-    bool hasBaseModel;
-} ModelFuser;
-
-/** Set a global current Compiler */
-Fuser* current = NULL;
-ModelFuser* currentModel = NULL;
-
-/*****************************
- *  FUSER SCOPE BASED ITEMS  *
- *****************************/
-
-// local variable parsing / compilation
-#include "parsers/local.h"
-
-/**
- * Resolves a local reference by name.
- * @param fuser             Compiler to resolve a local of.
- * @param name              Name of local variable.
+/** 
+ * Initialises a compiler instance. 
+ * @param fuser             Compiler to initialise.
+ * @param type              Type of compilation.
  */
-static int fuser_resolveLocal(Fuser* fuser, Token* name) {
-    for (int i = fuser->localCount - 1; i >= 0; i--) {
-        Local* local = &fuser->locals[i];
-        if (areIdentifiersEqual(name, &local->name)) {
-            if (local->depth == -1) error("Cannot read local variable in its own initialiser.");
-            return i;
-        }
-    }
-    return -1;
-}
-
-/**
- * Resolves a closure upvalue by name.
- * @param fuser             Compiler to resolve upvalue from.
- * @param name              Name of upvalue to resolve.
- */
-static int fuser_resolveUpvalue(Fuser* fuser, Token* name) {
-    if (fuser->enclosing == NULL) return -1;
-
-    int local = fuser_resolveLocal(fuser->enclosing, name);
-    if (local != -1) {
-        fuser->enclosing->locals[local].isCaptured = true;
-        return fuser_addUpvalue(fuser, (uint8_t)local, true);
-    }
-
-    // recursion to help resolve upvalues
-    int upvalue = fuser_resolveUpvalue(fuser->enclosing, name);
-    if (upvalue != -1) return fuser_addUpvalue(fuser, (uint8_t)upvalue, false);
-
-    // otherwise bad match
-    return -1;
-}
-
-/** Marks the top Local Variable as initialised */
-static void fuser_markInitialised() {
-    if (current->scopeDepth == 0) return;
-    current->locals[current->localCount - 1].depth = current->scopeDepth;
-}
-
-/** Parses a model "this" reference */
-static void modelThis(bool canAssign) {
-    // ensure we have a class accessing "this"
-    if (currentModel == NULL) {
-        error("Cannot user \"this\" outside of a model.");
-        return;
-    }
-
-    // and parse as a variable
-    emitByte(OP_MUTATE);  // want "this" to be mutable
-    variable(false);
-}
-
-/** Parses a model "super" reference */
-static void modelSuper(bool canAssign) {
-    // error checking
-    if (currentModel == NULL) {
-        error("Cannot use 'super' keyword outside of a model.");
-    } else if (!currentModel->hasBaseModel) {
-        error("Cannot user 'super' keyword in a model with no base.");
-    }
-
-    consume(T_PERIOD, "Expected a period after \"super\" keyword.");
-    consume(T_IDENTIFIER, "Expected parent model method name.");
-    uint8_t name = identifierConstant(&parser.previous);
-
-    // start the super call
-    namedVariable(syntheticToken(T_THIS, "this"), false, false);
-    if (match(T_LEFT_PAREN)) {
-        uint8_t argCount = argumentList();
-        namedVariable(syntheticToken(T_SUPER, "super"), false, false);
-        EMIT_SHORT(OP_SUPER_INVOKE, name);
-        emitByte(argCount);
-    } else {
-        namedVariable(syntheticToken(T_SUPER, "super"), false, false);
-        EMIT_SHORT(OP_GET_SUPER, name);
-    }
-}
-
-/********************
- *  ERROR HANDLING  *
- ********************/
-
-/**
- * Throws an error from the previously parsed token.
- * @param message               Error message.
- */
-static void error(const char* message) { parser_errorAt(&parser.previous, message); }
-
-/**
- * Throws an error from the current token.
- * @param message               Error message.
- */
-static void errorAtCurrent(const char* message) { parser_errorAt(&parser.current, message); }
-
-/******************
- *  COMPILER API  *
- ******************/
-
-/** Initialises a compiler instance. */
-static void fuser_init(Fuser* fuser, ReactionType type) {
+static void fuser_init(nuc_Fuser* fuser, nuc_ReactionType type) {
     fuser->enclosing = current;
-    fuser->reac = NULL;
+    fuser->reaction = NULL;
     fuser->type = type;
     fuser->localCount = 0;
     fuser->scopeDepth = 0;
+    fuser->immutableCount = 0;
+    NUC_RESET_CFLAGS;
 
-    // and NOW allocate new reaction
-    fuser->reac = reaction_new();
+    // and now allocate the new reaction
+    fuser->reaction = reaction_new();
 
-    // and set the current compiler
+    // set the current compiler
     current = fuser;
-    if (type != RT_SCRIPT) current->reac->name = objString_copy(parser.previous.start, parser.previous.length);
+    if (type != RT_SCRIPT) current->reaction->name = objString_copy(parser.previous.start, parser.previous.length);
 
     // claim slot 0 for VM use only
-    Local* local = &current->locals[current->localCount++];
+    nuc_Local* local = &current->locals[current->localCount++];
     local->depth = 0;
     local->isCaptured = false;
+    local->immutable = true;  // want to denote as immutable
 
     // allow THIS referencing
     if (type != RT_REACTION) {
@@ -195,101 +53,46 @@ static void fuser_init(Fuser* fuser, ReactionType type) {
     }
 }
 
-/** Retrieves the currently chunk being compiled to. */
-static Chunk* currentChunk() { return &current->reac->chunk; }
-
-/** Emits the Return Operation. */
-static void emitReturn() {
-    if (current->type == RT_INITIALISER) {
-        EMIT_SHORT(OP_GET_LOCAL, 0);
-    } else {
-        emitByte(OP_NULL);
-    }
-
-    emitByte(OP_RETURN);
-}
-
-/** Starts a compilation scope. */
-static void fuser_beginScope() { current->scopeDepth++; }
-
-/** Ends a compilation scope. */
-static void fuser_endScope() {
-    current->scopeDepth--;  // decrement the current scope
-
-    // and want to POP all the local values
-    while (current->localCount > 0 && current->locals[current->localCount - 1].depth > current->scopeDepth) {
-        // close up values if captured or pop if otherwise
-        emitByte(current->locals[current->localCount - 1].isCaptured ? OP_CLOSE_UPVALUE : OP_POP);
-        current->localCount--;
-    }
-}
-
 /** Coordinates ending the compilation process. */
-static ObjReaction* fuser_end() {
-    emitReturn();
-    ObjReaction* reac = current->reac;
+static nuc_ObjReaction* fuser_complete() {
+    chunk_emitReturn();
+    nuc_ObjReaction* reaction = current->reaction;
 
-#ifdef NUC_DEBUG_PRINT_CODE
-    // display chunk if desired
+#ifdef NUC_DEBUG_BYTECODE  // display chunk if desired
     if (!parser.hadError) nuc_disassembleChunk(
-        currentChunk(),
-        reac->name != NULL
-            ? reac->name->chars  // using reaction name
-            : "<script>");       // or the base script
+        fuser_currentChunk(),
+        reaction->name != NULL
+            ? reaction->name->chars  // using reaction name
+            : "<script>");           // or the base script
 #endif
 
     // and return the compiled reaction
-    current = current->enclosing;  // and dec the compilation stack
-    return reac;
+    current = current->enclosing;  // decrement the compiler stack
+    return reaction;
 }
-
-/****************************
- *  EXPRESSION PARSING API  *
- ****************************/
-
-/** Parses a Nucleus Expression. */
-static void expression() {
-    parsePrecedence(P_ASSIGNMENT);
-}
-
-/***************
- *  FUSER API  *
- ***************/
-
-#include "expression/declaration.h"
-#include "statement/statement.h"
 
 /**
  * Coordinates compilation of Nucleus source code.
  * @param source                Source code.
  */
-ObjReaction* fuse(const char* source) {
-    lexer_init(source);             // initialise the lexer
-    Fuser fuser;                    // and the compiler
-    fuser_init(&fuser, RT_SCRIPT);  // set to base SCRIPT type
+nuc_ObjReaction* nuc_fuse(const char* source) {
+    lexer_init(source);             // initalise the lexer
+    nuc_Fuser fuser;                // and the compiler
+    fuser_init(&fuser, RT_SCRIPT);  // set the base script
 
-    // set the parser to allow input
+    // set the parser into start mode
     parser.hadError = false;
     parser.panicMode = false;
 
-    // prime the compilation pump
-    advance();
+    // prime the compilation
+    ADVANCE;
 
     // and run the main loop of fusing a code chunk
-    while (!match(T_EOF)) declaration();
+    while (!MATCH(T_EOF)) nuc_declaration();
 
-    // return if we had an error
-    ObjReaction* reac = fuser_end();  // stop the compilation
-    return parser.hadError ? NULL : reac;
-}
-
-/** Marks the compilers roots as safe from garbage collection. */
-void gc_markCompilerRoots() {
-    Fuser* fuser = current;
-    while (fuser != NULL) {
-        gc_markObject((Obj*)fuser->reac);
-        fuser = fuser->enclosing;
-    }
+    // return NULL if an error occured
+    nuc_ObjReaction* reaction = fuser_complete();  // stop the compilation
+    return parser.hadError ? NULL : reaction;
 }
 
 #endif

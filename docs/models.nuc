@@ -1,0 +1,38 @@
+#!
+#   Nucleus - Models
+#
+# Although there are Model literals in Nucleus, there are also "Class" based
+# models. These models are declared using the `model` keyword which is synonymous with
+# the "class" keyword of other programming languages. The reasoning behind this is that
+# a the term "model" better defines an object that "models" a desired item. From the base
+# "model", a `submodel` can then be derived. These are the main principals behind OOP 
+# within Nucleus.
+!#
+
+model Animal {                          # Defines a new Model type of `Animal`.
+    species: "unknown";                 # The `species` field for this model.
+
+    @construct(species) {               # Constructor method for this model.
+        this.setSpecies(species);
+    }
+
+    isDog() {                           # A base model method. This method will be passed
+        return this.species == "dog";   # down to submodels.
+    }
+
+    @recessive                          # A recessive model method directive. This denotes
+    setSpecies(species) {               # that this method CANNOT be passed to submodels.
+        this.species = species;
+    }
+};
+
+# Model Instance Invokation
+const cat = Animal("cat");              # By calling the model name as a reaction, this creates
+                                        # a new instance of that model with the given construction
+                                        # parameters.
+
+model Dog derives Animal {              # A submodel that derives from the Animal base model.
+    @construct() {                      
+        super.@construct("dog");        # By calling the `super` keyword, base model methods can
+    }                                   # be accessed, UNLESS they were denoted as @recessive.
+};

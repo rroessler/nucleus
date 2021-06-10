@@ -1,0 +1,21 @@
+#!
+#   Nucleus - Natives / Standard Library
+#
+# The standard library in Nucleus acts a little differently than most. As the Nucleus project
+# aims to have a large and rich set of natives, these methods are only instantiated into the 
+# set of globals WHEN required. Although this may give a little overhead on the initial library
+# reaction call, this means that by not pre-loading all natives (especially when not all are 
+# required), that the initial start time for a Nucleus program will occur sooner. Additionally,
+# since all standard library methods and properties are set as immutable (except a few), this
+# entails that all items are referenced by "whole" strings as opposed to being within nested
+# models. This further improves call times for natives.
+#
+# On from this, the Nucleus Standard Library currently has access to the following areas:
+#       - math          (math API)
+#       - std.rand      (random number generation API)
+#       - std.time      (temporal API)
+#       - std.proc      (process API)
+# 
+# For some miscellaneous single method natives, Nucleus has:
+#       std.print       (prints inputs to console)
+!#

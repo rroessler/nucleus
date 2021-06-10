@@ -1,0 +1,49 @@
+#!
+#   Nucleus - Variables
+#
+# Within a Nucleus program, there a variety of variables that can be utilised. Of
+# these the main types that can be encountered include:
+#       Numerics - 64 Bit Numbers
+#       Booleans - `true` / `false`
+#       Strings - ASCII encoded strings
+#       Arrays - List of variables
+#       Reactions - A take on functions
+#       NULL - The empty variable
+#       Models - A take on Objects
+#
+# All of these primatives can be created by use of literals. Alongside this, all 
+# variables must be instantiated with a `let` or `const` keyword, denoting whether
+# a given primative is `mutable` or `immutable`.
+!#
+
+let num = 42;   # Numeric literal assignment.
+                # If `const` was used to declared a numeric, then that variable 
+                # (as specified by the name `num`), cannot be modified again.
+
+let bool = true;    # Boolean literal assignment.
+                    # `const` also makes the variable `bool` immutable.
+
+let str = "Hello!"; # String literal assignment.
+                    # `const` also makes the variable `str` immutable.
+
+let NULL = null;    # Null literal assignment.
+                    # This type denotes "empty" or "nothing". The `null` literal
+                    # is also used heavily for "invalidity".
+
+let emptyArr = [];  # Empty array literal.
+let arr = [1, 2];   # Array literal with initial items.
+                    # `const` will force an array to be "frozen" and thus not be
+                    # able to be modified. Can derive sub-arrays through primative
+                    # array methods however.
+
+reaction namedReaction() { }    # A named reaction declaration.
+                                # These reactions are ALWAYS set as `const`.
+let anonReaction = rn() { };    # Anonymous reaction declaration.
+                                # These reactions can be created inline, and can be
+                                # mutable or immutable as desired.
+
+let emptyObj = {};                  # Model literal assignment with no properties.
+let obj = {                         # Model literal with initial properties.
+    field: "Model Field",           # `const` here will make a model "frozen". This means
+    method() { #! Model Method !# } # that properties cannot be modified, event nested items.
+};

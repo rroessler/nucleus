@@ -1,6 +1,6 @@
 # Computes a vector normalization for a 3D vector.
 reaction vecNorm(x, y, z) {
-    let mag = math.sqrt(x * x + y * y + z * z);
+    let mag = math.hypot(x, y, z);
     let scale = 0;
     if (mag != 0) scale = 1 / mag;
 }

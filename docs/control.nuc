@@ -1,0 +1,55 @@
+#!
+#   Nucleus - Control Flow
+#
+# Control flow in Nucleus works similar to many other dynamic programming languages. This
+# being that the common concepts of loops, conditionals and error disruptions are available.
+!#
+
+if (true) { }       # `if` / `else` statements work
+else { }            # as expected. There is no difference
+                    # in syntax as these are identifiable
+                    # and well structured for any program
+
+repif (false) { }   # The "while" keyword has been replaced with `repif`,
+                    # denoting "repeat if". This change in lexicology makes
+                    # more sense with "do-while" statements as "do-repif", or
+do { } repif (true) # "do { } repeat if" makes more readable sense in terms
+                    # of running a block of code once, before checking the
+                    # condition.
+
+try {                   # The try catch also has no difference in
+                        # syntax, as we do want to "try" a section
+} catch (disruption) {  # of code to catch an errors that arise.
+                        # In Nucleus, errors are denoted as "disruptions".
+}                       # This is because, more often than not an error
+                        # might be caught and handled, thus actually being
+                        # a disruption over an actual error persay.
+
+for (let i : 0, 10) { } # Most notably for Nucleus, is the modification to
+                        # `for` loops. The above one as such iterates "i" from
+                        # 0 -> 10, in increments of default "1". The structure 
+                        # for `for` loops is:
+                        #
+                        #  `for (let variable : initialiser, comparator, incrementor) { }`
+                        #
+                        # This structure drastically changes how a for loop can be run. Additionally,
+                        # the ":" also denotes a loop operator in which there are different types.
+                        # These are all best seen in context.
+
+for (let i : 0, 10, 2) { }  # Increments from 0 -> 10 in increments of 2.
+for (let i : 10, 0, -1) { } # Decrements from 10 -> 0 in increments of -2 (Note: this is "increment" as the compiler ADDS this value).
+                        # initialiser variable of the loop by ONE
+for (let i : 10, {>} 1, {/} 2) { }  # Iterates from 10 downwards where the "i" value is "divided" by
+                                    # "2" on each iteration, and the loop continues if "i > 1".
+
+let arr = [1, 2, 3, 4, 5];
+for (const val |: arr) { }  # The "|:" operator specifies iterating over an Array or Models values.
+                            # This operation "pipes" the values of the array into `val` on each loop.
+
+let obj = {
+    a: "A",
+    b: "B",
+    c: "C"
+};
+for (const key <: obj) { }  # The "<:" operators specifies iterating over an Array or Models keys.
+                            # This operation "reduces" the keys of the array int `key` on each loop.

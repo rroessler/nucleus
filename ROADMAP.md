@@ -5,13 +5,13 @@ Roadmap
     - [ ] Numeric Literals
         - [x] Decimal
         - [x] Float
-        - [x] Hex
-        - [x] Binary
-        - [x] Octal
+        - [ ] Hex (these just need parsers / C string conversions)
+        - [ ] Binary
+        - [ ] Octal
         - [ ] Scientific
-    - [ ] String Literals
+    - [x] String Literals
         - [x] ASCII
-        - [ ] Unescaped Chars
+        - [x] Unescaped Chars
     - [x] Boolean
     - [x] NULL
     - [x] Model
@@ -19,6 +19,7 @@ Roadmap
         - [x] Base Model Declaration
         - [x] Derived Model Declaration
     - [ ] Array
+        - [ ] Inline Array Declaration
     - [ ] Primative Builtin Methods
         - [ ] Numeric
         - [ ] String
@@ -26,7 +27,8 @@ Roadmap
         - [ ] Array
     - [ ] Modifiers
         - [x] let
-        - [ ] const (needs polishing)
+        - [x] const (completed at compile-time)
+        - [ ] ...
 - [x] Flow Control Operations
     - [x] Reaction Calls (Functions)
     - [x] Anonymous Reactions
@@ -39,11 +41,12 @@ Roadmap
         - [x] -
         - [x] *
         - [x] /
-        - [ ] %
+        - [x] %
         - [ ] **
     - [x] Unary
         - [x] !
         - [x] -
+        - [x] ~
     - [x] Comparison
         - [x] ==
         - [x] !=
@@ -54,24 +57,27 @@ Roadmap
         - [x] &&
         - [x] ||
     - [ ] Bitwise
-        - [ ] &
-        - [ ] |
-        - [ ] <<
-        - [ ] >>
+        - [x] &
+        - [x] |
+        - [x] <<
+        - [x] >>
         - [ ] ^
-        - [ ] ~
 - [ ] Directives
-    - [x] @mutate
-    - [x] @construct
+    - [x] `@mutate`
+    - [x] `@construct`
     - [ ] ...
 - [ ] Native Libraries
     - [ ] `std.print`
     - [x] `math`
-    - [ ] `std.rand`
+    - [x] `std.rand`
     - [ ] ...
 - [ ] Runtime Optimizations
-    - [ ] Lazy Loading Natives
-    - [ ] NaN Boxing with Mutability
+    - [x] Lazy Loading Natives
+    - [x] NaN Boxing with Mutability
 - [ ] Error Disruptions / Resolving
+    - [x] Internal Immediate Disruptions
+    - [ ] Catchable Error Handling
+    - [ ] User Error Throwing
 - [ ] Module Implementation
+- [ ] Asynchronicity
 - [ ] Documentation

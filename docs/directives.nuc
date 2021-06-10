@@ -1,0 +1,26 @@
+#!
+#   Nucleus - Directives
+#
+# Directives in Nucleus refer to special keyword commands that can alter
+# how a program is atomized. These are items that directly refer to specific
+# internal properties, and allow for some complex approaches to programming.
+!#
+
+const immutableNumber = 42;     
+@mutate immutableNumber = 86;   # The @mutate directive ALLOWS a program to momentarily
+                                # mutate an expected immutable. The primary reasoning behind this
+                                # is that by setting a "frozen" state to immutable models, there
+                                # might be the time in which a mutation is necessary. Since this
+                                # modification can only occur at ONE point (where this directive)
+                                # occurs, this would make `const` variables strict but also
+                                # allow for variation within reason. This directive could well
+                                # be abused by novice programmers, but otherwise opens up avenues
+                                # for more flexibility when using `const` with locked Models
+                                # and/or Arrays.
+
+let obj = {
+    @construct() {  }           # Runs a constructor method for Models. This is typically used
+};                              # for "Class" based models, however this directive extends to
+                                # Model literals to allow for complex creation methods. Note:
+                                # on "Class" based models will actually have access to the `this`
+                                # property.

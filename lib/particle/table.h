@@ -1,33 +1,40 @@
-#ifndef NUC_TABLE_H
-#define NUC_TABLE_H
+#ifndef NUC_HASH_TABLE_H
+#define NUC_HASH_TABLE_H
 
 // Nucleus Headers
 #include "../common.h"
-#include "../memory.h"
-#include "object.h"
-#include "value.h"
+#include "../utils/memory.h"
+#include "objects/type.h"
 
-// set a max load for tables for growth
+/***********************
+ *  TABLE DEFINITIONS  *
+ ***********************/
+
+// set a max load scale for tables growth
 #define TABLE_MAX_LOAD 0.75
 
-/** Table Entries */
+/** Hash Table Entries */
 typedef struct {
-    ObjString* key;
-    Particle value;
-} Entry;
+    nuc_ObjString* key;
+    nuc_Particle value;
+} nuc_Entry;
 
-/** Hash Table */
+/** Hash Table Structure */
 typedef struct {
     int count;
     int capacity;
-    Entry* entries;
-} Table;
+    nuc_Entry* entries;
+} nuc_Table;
+
+/*******************
+ *  TABLE METHODS  *
+ *******************/
 
 /**
  * Initialises a Hash Table.
  * @param table             Hash table to initialise.
  */
-void table_init(Table* table) {
+void table_init(nuc_Table* table) {
     table->count = 0;
     table->capacity = 0;
     table->entries = NULL;
@@ -37,8 +44,8 @@ void table_init(Table* table) {
  * Frees a hash table from memory.
  * @param table             Hash table to free.
  */
-void table_free(Table* table) {
-    FREE_ARRAY(Entry, table->entries, table->capacity);
+void table_free(nuc_Table* table) {
+    NUC_FREE_ARR(nuc_Entry, table->entries, table->capacity);
     table_init(table);
 }
 
@@ -48,12 +55,12 @@ void table_free(Table* table) {
  * @param capacity          Size of entries.
  * @param key               Key to search for.
  */
-static Entry* table_findEntry(Entry* entries, int capacity, ObjString* key) {
+static nuc_Entry* table_findEntry(nuc_Entry* entries, int capacity, nuc_ObjString* key) {
     uint32_t index = key->hash & (capacity - 1);
-    Entry* tombstone = NULL;  // tombstone entry
+    nuc_Entry* tombstone = NULL;  // tombstone entry
 
     for (;;) {
-        Entry* entry = &entries[index];
+        nuc_Entry* entry = &entries[index];
 
         // found a tombstone
         if (entry->key == NULL) {
@@ -74,8 +81,8 @@ static Entry* table_findEntry(Entry* entries, int capacity, ObjString* key) {
  * @param table                 Table to adjust capacity of.
  * @param capacity              Capacity to adjust to.
  */
-static void table_adjustCapacity(Table* table, int capacity) {
-    Entry* entries = ALLOCATE(Entry, capacity);  // allocate the size to memory
+static void table_adjustCapacity(nuc_Table* table, int capacity) {
+    nuc_Entry* entries = NUC_ALLOC(nuc_Entry, capacity);  // allocate the size to memory
     for (int i = 0; i < capacity; i++) {
         entries[i].key = NULL;
         entries[i].value = NUC_NULL;  // default to null value
@@ -86,16 +93,16 @@ static void table_adjustCapacity(Table* table, int capacity) {
 
     // and push the entries back onto the table
     for (int i = 0; i < table->capacity; i++) {
-        Entry* entry = &table->entries[i];
+        nuc_Entry* entry = &table->entries[i];
         if (entry->key == NULL) continue;
 
-        Entry* dest = table_findEntry(entries, capacity, entry->key);
+        nuc_Entry* dest = table_findEntry(entries, capacity, entry->key);
         dest->key = entry->key;
         dest->value = entry->value;
         table->count++;  // to fix up tombstones messing up count
     }
 
-    FREE_ARRAY(Entry, table->entries, table->capacity);
+    NUC_FREE_ARR(nuc_Entry, table->entries, table->capacity);
     table->entries = entries;
     table->capacity = capacity;
 }
@@ -105,11 +112,11 @@ static void table_adjustCapacity(Table* table, int capacity) {
  * @param table             Table to delete entry of.
  * @param key               Key of entry.
  */
-bool table_delete(Table* table, ObjString* key) {
+bool table_delete(nuc_Table* table, nuc_ObjString* key) {
     if (table->count == 0) return false;  // no table to delete an item from
 
     // find an entry
-    Entry* entry = table_findEntry(table->entries, table->capacity, key);
+    nuc_Entry* entry = table_findEntry(table->entries, table->capacity, key);
     if (entry->key == NULL) return false;
 
     // place a tombstone on the entry
@@ -124,13 +131,13 @@ bool table_delete(Table* table, ObjString* key) {
  * @param key               Key of entry.
  * @param value             Value to set to entry.
  */
-bool table_set(Table* table, ObjString* key, Particle value) {
+bool table_set(nuc_Table* table, nuc_ObjString* key, nuc_Particle value) {
     if (table->count + 1 > table->capacity * TABLE_MAX_LOAD) {
-        int capacity = GROW_CAPACITY(table->capacity);
+        int capacity = NUC_CAP_GROW_FAST(table->capacity);
         table_adjustCapacity(table, capacity);
     }
 
-    Entry* entry = table_findEntry(table->entries, table->capacity, key);
+    nuc_Entry* entry = table_findEntry(table->entries, table->capacity, key);
     bool isNewKey = entry->key == NULL;
     if (isNewKey && IS_NULL(entry->value)) table->count++;
 
@@ -146,11 +153,11 @@ bool table_set(Table* table, ObjString* key, Particle value) {
  * @param key               Accessor key.
  * @param value             Pointer to store result to.
  */
-bool table_get(Table* table, ObjString* key, Particle* value) {
+bool table_get(nuc_Table* table, nuc_ObjString* key, nuc_Particle* value) {
     if (table->count == 0) return false;  // no values
 
     // search for the entry
-    Entry* entry = table_findEntry(table->entries, table->capacity, key);
+    nuc_Entry* entry = table_findEntry(table->entries, table->capacity, key);
     if (entry->key == NULL) return false;  // no match
 
     // and save the value
@@ -165,13 +172,13 @@ bool table_get(Table* table, ObjString* key, Particle* value) {
  * @param length            Length of chars.
  * @param hash              Iteration hash.
  */
-ObjString* table_findString(Table* table, const char* chars, int length, uint32_t hash) {
+nuc_ObjString* table_findString(nuc_Table* table, const char* chars, int length, uint32_t hash) {
     if (table->count == 0) return NULL;  // return early if empty
 
     // and iterate over the entries
     uint32_t index = hash & (table->capacity - 1);
     for (;;) {
-        Entry* entry = &table->entries[index];
+        nuc_Entry* entry = &table->entries[index];
 
         // stop if we find an empty non-tombstone entry
         if (entry->key == NULL && IS_NULL(entry->value)) {
@@ -193,9 +200,9 @@ ObjString* table_findString(Table* table, const char* chars, int length, uint32_
  * @param from              Table from.
  * @param to                Table to.
  */
-void table_addAll(Table* from, Table* to) {
+void table_addAll(nuc_Table* from, nuc_Table* to) {
     for (int i = 0; i < from->capacity; i++) {
-        Entry* entry = &from->entries[i];
+        nuc_Entry* entry = &from->entries[i];
         if (entry->key != NULL) table_set(to, entry->key, entry->value);
     }
 }

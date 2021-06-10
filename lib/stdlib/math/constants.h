@@ -1,0 +1,8 @@
+#ifndef NUC_STDLIB_MATH_CONSTANTS_H
+#define NUC_STDLIB_MATH_CONSTANTS_H
+
+#ifdef NUC_NTVDEF_MATH
+
+#endif
+
+#endif

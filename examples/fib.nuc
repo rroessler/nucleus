@@ -4,7 +4,7 @@ reaction fib(n) {
     return fib(n - 2) + fib(n - 1);
 }
 
-const N = 30; # set an input
+const N = 25; # set an input
 const t_start = std.time.clock(); # time in us
 
 # compute and save result

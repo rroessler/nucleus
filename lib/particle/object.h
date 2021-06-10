@@ -3,172 +3,161 @@
 
 // Nucleus Headers
 #include "../common.h"
-#include "../memory.h"
+#include "../utils/memory.h"
+#include "../vm/global.h"
+#include "objects/type.h"
 #include "value.h"
 
-/** Object Type Enumeration */
-typedef enum {
-    OBJ_CLOSURE,
-    OBJ_UPVALUE,
-    OBJ_REACTION,
-    OBJ_NATIVE,
-    OBJ_MODEL,
-    OBJ_INSTANCE,
-    OBJ_BOUND_METHOD,
-    OBJ_STRING,
-} ObjType;
+/***********************
+ *  AVAILABLE OBJECTS  *
+ ***********************/
 
-/** Nucleus Internal Object Value. */
-struct Obj {
-    ObjType type;
-    bool isMarked;
-    bool mutable;      // whether the object can be MODIFIED
-    struct Obj* next;  // pointer to NEXT object on heap
-};
-
-/** Macro for getting the Object Type */
-#define OBJ_TYPE(value) (AS_OBJ(value)->type)
-
-// IS defines for objects
-#define IS_CLOSURE(value) isObjType(value, OBJ_CLOSURE)
-#define IS_MODEL(value) isObjType(value, OBJ_MODEL)
-#define IS_BOUND_METHOD(value) isObjType(value, OBJ_BOUND_METHOD)
-#define IS_INSTANCE(value) isObjType(value, OBJ_INSTANCE)
-#define IS_REACTION(value) isObjType(value, OBJ_REACTION)
-#define IS_NATIVE(value) isObjType(value, OBJ_NATIVE)
-#define IS_STRING(value) isObjType(value, OBJ_STRING)
-
-// AS defines for objects
-#define AS_CLOSURE(value) ((ObjClosure*)AS_OBJ(value))
-#define AS_MODEL(value) ((ObjModel*)AS_OBJ(value))
-#define AS_BOUND_METHOD(value) ((ObjBoundMethod*)AS_OBJ(value))
-#define AS_INSTANCE(value) ((ObjInstance*)AS_OBJ(value))
-#define AS_REACTION(value) ((ObjReaction*)AS_OBJ(value))
-#define AS_NATIVE(value) (((ObjNative*)AS_OBJ(value))->reac)
-#define AS_STRING(value) ((ObjString*)AS_OBJ(value))
-#define AS_CSTRING(value) (((ObjString*)AS_OBJ(value))->chars)
-
-/**
- * Checks if a particle have is of a specific internal object type.
- * @param value             Particle to check.
- * @param type              Type to check against.
- */
-static inline bool isObjType(Particle value, ObjType type) {
-    return IS_OBJ(value) && AS_OBJ(value)->type == type;
-}
+#include "objects/closure.h"
+#include "objects/model.h"
+#include "objects/reaction.h"
+#include "objects/string.h"
 
 /****************
  *  OBJECT API  *
  ****************/
 
-// forward declaraion
-static Obj* obj_alloc(size_t size, ObjType type);
-void obj_freeAll();
+/**
+ * Allocates an object of given size and type into memory.
+ * @param size              Size of object.
+ * @param type              Internal object type.
+ */
+nuc_Obj* obj_alloc(size_t size, nuc_ObjType type) {
+    nuc_Obj* obj = (nuc_Obj*)nuc_realloc(NULL, 0, size);
+    obj->type = type;
+    obj->isMarked = false;
 
-/** Macro to quickly allocate objects. */
-#define ALLOCATE_OBJ(type, objectType) (type*)obj_alloc(sizeof(type), objectType)
+    // set up singley linked objects list
+    obj->next = atomizer.objects;
+    atomizer.objects = obj;
 
-// includes that will be resolved in compilation
-#include "object/closure.h"
-#include "object/model.h"
-#include "object/native.h"
-#include "object/reaction.h"
-#include "object/string.h"
+#ifdef NUC_DEBUG_GC  // display GC allocation
+    printf("[\x1b[2;31mGC\x1b[0m] ");
+    printf("\x1b[35m%p\x1b[0m: Allocated \x1b[33m%zu\x1b[0m for \x1b[33m%d\x1b[0m.\n", (void*)obj, size, type);
+#endif
+
+    // and return the object reference
+    return obj;
+}
 
 /**
  * Frees an object from memory.
- * @param object             Object to free from memory.
+ * @param obj              Object to free from memory.
  */
-static void obj_free(Obj* object) {
-#ifdef NUC_DEBUG_LOG_GC
-    printf("%p free type %d\n", (void*)object, object->type);
+static void obj_free(nuc_Obj* obj) {
+#ifdef NUC_DEBUG_GC  // display GC freeing
+    printf("[\x1b[2;31mGC\x1b[0m] ");
+    printf("\x1b[35m%p\x1b[0m: Freed type \x1b[33m%d\x1b[0m.\n", (void*)obj, obj->type);
 #endif
 
-    switch (object->type) {  // need to free based on type
+    // depending on the type
+    switch (obj->type) {
         case OBJ_STRING: {
-            ObjString* string = (ObjString*)object;
-            FREE_ARRAY(char, string->chars, string->length + 1);
-            FREE(ObjString, object);
+            nuc_ObjString* string = (nuc_ObjString*)obj;
+            NUC_FREE_ARR(char, string->chars, string->length + 1);
+            NUC_FREE(nuc_ObjString, obj);
         } break;
         case OBJ_REACTION: {
-            ObjReaction* reac = (ObjReaction*)object;
+            nuc_ObjReaction* reac = (nuc_ObjReaction*)obj;
             chunk_free(&reac->chunk);
-            FREE(ObjReaction, reac);
+            NUC_FREE(nuc_ObjReaction, reac);
         } break;
         case OBJ_NATIVE: {
-            FREE(ObjNative, object);
+            NUC_FREE(nuc_ObjNative, obj);
         } break;
         case OBJ_CLOSURE: {
-            ObjClosure* closure = (ObjClosure*)object;
-            FREE_ARRAY(ObjUpvalue*, closure->upvalues, closure->uvCount);
-            FREE(ObjClosure, object);
+            nuc_ObjClosure* closure = (nuc_ObjClosure*)obj;
+            NUC_FREE_ARR(nuc_ObjUpvalue*, closure->upvalues, closure->uvCount);
+            NUC_FREE(nuc_ObjClosure, obj);
         } break;
         case OBJ_UPVALUE: {
-            FREE(ObjUpvalue, object);
+            NUC_FREE(nuc_ObjUpvalue, obj);
         } break;
         case OBJ_MODEL: {
-            ObjModel* model = (ObjModel*)object;
+            nuc_ObjModel* model = (nuc_ObjModel*)obj;
             table_free(&model->methods);
             table_free(&model->defaults);
-            FREE(ObjModel, object);
+            NUC_FREE(nuc_ObjModel, obj);
         } break;
         case OBJ_INSTANCE: {
-            ObjInstance* inst = (ObjInstance*)object;
+            nuc_ObjInstance* inst = (nuc_ObjInstance*)obj;
             table_free(&inst->fields);
-            FREE(ObjInstance, object);
+            NUC_FREE(nuc_ObjInstance, obj);
         } break;
         case OBJ_BOUND_METHOD: {
-            FREE(ObjBoundMethod, object);
+            NUC_FREE(nuc_ObjBoundMethod, obj);
         } break;
+        case OBJ_ARRAY:
+            break;
     }
 }
 
 /**
+ * Checks if a given object is currently empty.
+ * @param obj                   Object particle to check.
+ */
+static bool obj_isEmpty(nuc_Obj* obj) {
+    switch (obj->type) {
+        case OBJ_STRING: {  // just to confirm length
+            nuc_ObjString* string = (nuc_ObjString*)obj;
+            return string->length == 0;
+        }
+        case OBJ_INSTANCE: {  // can only be empty if derives from model literal
+            nuc_ObjInstance* inst = (nuc_ObjInstance*)obj;
+            return inst->fields.count == 0 &&
+                   memcmp(inst->model->name->chars, "Model", 5);
+        }
+        case OBJ_ARRAY:
+        default:  // all otherwise will ALWAYS return false
+            return false;
+    }
+}
+
+/**
+ * Allows wrapping particle print blocks in a printf CHALK.
+ * @param chalk             ANSI colour/style modifer code.
+ */
+#define NUC_PRETTIFY_WRAP(chalk, ...)         \
+    if (prettify) printf("\x1b[" #chalk "m"); \
+    { __VA_ARGS__; }                          \
+    if (prettify) printf("\x1b[0m");
+
+/**
  * Prints an internal object value.
- * @param value             Particle to print.
+ * @param value             Object Particle to print.
  * @param prettify          Whether to prettify the output.
  */
-void obj_print(Particle value, bool prettify) {
-    switch (OBJ_TYPE(value)) {  // this will also filter BAD values
+void obj_print(nuc_Particle value, bool prettify) {
+    switch (OBJ_TYPE(value)) {
         case OBJ_STRING:
-            if (prettify) printf("\x1b[36m\"");
-            printf("%s", AS_CSTRING(value));
-            if (prettify) printf("\"\x1b[0m");
+            NUC_PRETTIFY_WRAP(36, printf(prettify ? "\"%s\"" : "%s", AS_CSTRING(value)));
             break;
         case OBJ_REACTION:
-            if (prettify) printf("\x1b[32m");
-            reaction_print(AS_REACTION(value));
-            if (prettify) printf("\x1b[0m");
+            NUC_PRETTIFY_WRAP(32, reaction_print(AS_REACTION(value)));
             break;
         case OBJ_NATIVE:
-            if (prettify) printf("\x1b[32m");
-            printf("<native rn>");
-            if (prettify) printf("\x1b[0m");
+            NUC_PRETTIFY_WRAP(32, printf("<reaction: native>"));
             break;
         case OBJ_CLOSURE:
-            if (prettify) printf("\x1b[32m");
-            reaction_print(AS_CLOSURE(value)->reac);
-            if (prettify) printf("\x1b[0m");
+            NUC_PRETTIFY_WRAP(32, reaction_print(AS_CLOSURE(value)->reaction));
             break;
         case OBJ_UPVALUE:
-            if (prettify) printf("\x1b[34m");
-            printf("upvalue");
-            if (prettify) printf("\x1b[0m");
+            NUC_PRETTIFY_WRAP(34, printf("<upvalue>"));
             break;
         case OBJ_MODEL:
-            if (prettify) printf("\x1b[3;33m");
-            printf("<model: %s>", AS_MODEL(value)->name->chars);
-            if (prettify) printf("\x1b[0m");
+            NUC_PRETTIFY_WRAP(33, printf("<model: %s>", AS_MODEL(value)->name->chars));
             break;
         case OBJ_INSTANCE:
-            if (prettify) printf("\x1b[3;33m");
-            printf("<instance: %s>", AS_INSTANCE(value)->model->name->chars);
-            if (prettify) printf("\x1b[0m");
+            NUC_PRETTIFY_WRAP(33, printf("<instance: %s>", AS_INSTANCE(value)->model->name->chars));
             break;
         case OBJ_BOUND_METHOD:
-            if (prettify) printf("\x1b[32m");
-            reaction_print(AS_BOUND_METHOD(value)->method->reac);
-            if (prettify) printf("\x1b[0m");
+            NUC_PRETTIFY_WRAP(32, reaction_print(AS_BOUND_METHOD(value)->method->reaction));
+            break;
+        case OBJ_ARRAY:
             break;
     }
 }
