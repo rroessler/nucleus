@@ -74,13 +74,7 @@ This performance test worked around stress testing function calls with the recur
 |:--------:|:-------:|:---:|:---:|
 | **JavaScript** | 1.297ms | 1.092ms | 3.416ms |
 | **Python** | 23.473ms | 20.674ms | 27.526ms |
-<<<<<<< HEAD
 | **Nucleus** | 9.626ms | 9.150ms | 11.734ms |
-=======
-| **Nucleus** | 10.846ms | 10.023ms | 12.968ms |
-    
-</div>
->>>>>>> 70e2805da98e096ff72b6b6b0836ac7b36fa4262
 
 ### Vector Norm (Native Math Calls)
 This performance conversly worked on native `math` calls, in particular `math.sqrt` for Nucleus. Additionally, the vector norm method was doubly iterated over to get times for 100000 calls of `vecNorm`.
