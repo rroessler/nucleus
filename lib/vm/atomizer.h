@@ -31,9 +31,10 @@ void atomizer_init() {
     table_init(&atomizer.natives);
     atomizer_initPrimatives(&atomizer.primatives);
 
-    // create and intern the init string
-    atomizer.constructor = NULL;
+    // create and intern the common strings
     atomizer.constructor = objString_copy("@construct", 10);
+    atomizer.disruption = objString_copy("Disruption", 10);
+    atomizer.modelLiteral = objString_copy("Model", 5);
 
     // initialise garbage collection variables
     atomizer.grayCount = 0;
@@ -58,8 +59,10 @@ void atomizer_free() {
     table_free(&atomizer.natives);
     atomizer_freePrimatives(&atomizer.primatives);
 
-    // free the constructor string
+    // free the common strings
     atomizer.constructor = NULL;
+    atomizer.disruption = NULL;
+    atomizer.modelLiteral = NULL;
 
     // and free the grayed stack from memory
     free(atomizer.grayStack);

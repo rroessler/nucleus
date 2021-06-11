@@ -194,33 +194,29 @@ static void lexer_skipWS() {
     }
 }
 
-/**
- * Creates a based number token given a range base for numeric characters.
- * @param high              High digit available.
- * @param type              Token type to return.
- */
-static Token lexer_basedNumber(const char high, TokenType type) {
-    char c = lexer_peek();                              // retrieve an initial character
-    while (c >= '0' && c <= high) c = lexer_advance();  // and continue advancing
-    return lexer_tokenize(type);
-}
+/** Tokenizes special lexer methods */
+#define LEXER_SPECIAL_NUMERIC(METHOD, TYPE)                                           \
+    lexer.start = lexer.current;                                                      \
+    while (strings_##METHOD(lexer_peek())) lexer_advance();                           \
+    if (lexer.start == lexer.current) return lexer_error("Invalid numeric literal."); \
+    return lexer_tokenize(T_LIT_##TYPE)
 
 /** Tokenizes a number. */
-static Token lexer_number() {
-    if (lexer_peek() == '0') {  // potentially a octal, hex or binary value
-        switch (lexer_peekNext()) {
+static Token
+lexer_number() {
+    if (lexer.current[-1] == '0') {  // potentially a octal, hex or binary value
+        switch (lexer_advance()) {
             case 'x':
             case 'X':  // HEXADECIMAL
-                while (strings_isHex(lexer_peek())) lexer_advance();
-                return lexer_tokenize(T_LIT_HEX);
+                LEXER_SPECIAL_NUMERIC(isHex, HEX);
             case 'b':
             case 'B':  // BINARY
-                return lexer_basedNumber('1', T_LIT_BIN);
+                LEXER_SPECIAL_NUMERIC(isBinary, BIN);
             case 'o':
             case 'O':  // OCTAL
-                return lexer_basedNumber('7', T_LIT_OCT);
+                LEXER_SPECIAL_NUMERIC(isOctal, OCT);
             default:  // just return as a single value
-                break;
+                return lexer_error("Invalid numeric literal.");
         }
     }
 
@@ -360,6 +356,10 @@ Token lexer_scan() {
             return lexer_tokenize(T_LEFT_BRACE);
         case '}':
             return lexer_tokenize(T_RIGHT_BRACE);
+        case '[':
+            return lexer_tokenize(T_LEFT_BRACK);
+        case ']':
+            return lexer_tokenize(T_RIGHT_BRACK);
         case ';':
             return lexer_tokenize(T_SEMICOLON);
         case ':':
@@ -374,8 +374,6 @@ Token lexer_scan() {
             return lexer_tokenize(T_PLUS);
         case '/':
             return lexer_tokenize(T_SLASH);
-        case '*':
-            return lexer_tokenize(T_STAR);
         case '%':
             return lexer_tokenize(T_PERCENTAGE);
         case '^':
@@ -383,7 +381,9 @@ Token lexer_scan() {
         case '~':
             return lexer_tokenize(T_BITW_NOT);
 
-        // multi-character operators
+            // multi-character operators
+        case '*':
+            return lexer_tokenize(lexer_match('*') ? T_POW : T_STAR);
         case '!':
             return lexer_tokenize(lexer_match('=') ? T_BANG_EQUAL : T_BANG);
         case '=':

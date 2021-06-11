@@ -39,4 +39,8 @@ static inline bool strings_isDigit(char c) { return c >= '0' && c <= '9'; }
  */
 static inline bool strings_isHex(char c) { return strings_isDigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'); }
 
+static inline bool strings_isOctal(char c) { return (c >= '0' && c <= '1'); }
+
+static inline bool strings_isBinary(char c) { return (c == '0' || c == '1'); }
+
 #endif

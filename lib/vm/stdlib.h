@@ -35,9 +35,14 @@ static inline nuc_Particle atomizer_resolveNative(nuc_ObjString* name) {
 
 /** Defines the MODEL LITERAL that is used to create anonymous models using the "{}" syntax. */
 static inline void nuc_defineModelLiteral() {
-    nuc_ObjString* modelName = objString_copy("Model", 5);
-    nuc_Particle model = NUC_OBJ(model_new(modelName));  // generate the model
-    table_set(&atomizer.globals, modelName, model);
+    nuc_Particle model = NUC_OBJ(model_new(atomizer.modelLiteral));  // generate the model
+    table_set(&atomizer.globals, atomizer.modelLiteral, model);
+}
+
+/** Defines the DISRUPTION MODEL that is used for errors. */
+static inline void nuc_defineDisruptionModel() {
+    nuc_Particle model = NUC_OBJ(model_new(atomizer.disruption));
+    table_set(&atomizer.globals, atomizer.disruption, model);
 }
 
 /*******************
@@ -46,7 +51,8 @@ static inline void nuc_defineModelLiteral() {
 
 /** Defines a FIXED set of available models that a programmer may use. */
 static inline void nuc_defineModelLibrary() {
-    nuc_defineModelLiteral();  // the "{}" model literal
+    nuc_defineModelLiteral();     // the "{}" model literal
+    nuc_defineDisruptionModel();  // the "Disruption" model
 }
 
 #endif

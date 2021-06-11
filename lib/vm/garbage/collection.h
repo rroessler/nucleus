@@ -87,6 +87,8 @@ static void gc_markRoots() {
     // now want to mark tables / roots of atomizer
     gc_markTable(&atomizer.globals);
     gc_markObject((nuc_Obj*)atomizer.constructor);
+    gc_markObject((nuc_Obj*)atomizer.disruption);
+    gc_markObject((nuc_Obj*)atomizer.modelLiteral);
     gc_markCompilerRoots();
 }
 
@@ -134,7 +136,7 @@ static void gc_blackenObject(nuc_Obj* object) {
             gc_markObject((nuc_Obj*)bound->method);
         } break;
         case OBJ_ARRAY:
-        case OBJ_NATIVE:  // these items are coordinated through intersn / globals
+        case OBJ_NATIVE:  // these items are coordinated through interns / globals
         case OBJ_STRING:  // so no need to worry
             break;
     }

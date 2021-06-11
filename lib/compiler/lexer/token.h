@@ -11,6 +11,8 @@ typedef enum {
     T_RIGHT_PAREN,
     T_LEFT_BRACE,
     T_RIGHT_BRACE,
+    T_LEFT_BRACK,
+    T_RIGHT_BRACK,
     T_COMMA,
     T_PERIOD,
     T_SEMICOLON,
@@ -30,6 +32,7 @@ typedef enum {
     T_BITW_NOT,
     T_ROL,
     T_ROR,
+    T_POW,
 
     // comparisons / equalities
     T_BANG,

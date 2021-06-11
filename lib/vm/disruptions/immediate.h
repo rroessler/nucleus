@@ -28,7 +28,7 @@ inline static void nuc_immediateExit(uint8_t code, const char* format, ...) {
     va_start(args, format);
     vfprintf(stderr, format, args);
     va_end(args);
-    fputc('\n', stderr);
+    fputs("\n\n", stderr);
 
     // and exit
     exit(code);

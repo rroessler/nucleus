@@ -84,11 +84,11 @@ static int nuc_printShortInstruction(const char* name, nuc_Chunk* chunk, int off
  */
 static int nuc_printInvokeInstruction(const char* name, nuc_Chunk* chunk, int offset) {
     uint16_t constant = (uint16_t)(chunk->code[offset + 1] << 8) | chunk->code[offset + 2];
-    uint16_t argCount = (uint16_t)(chunk->code[offset + 3] << 8) | chunk->code[offset + 4];
+    uint8_t argCount = chunk->code[offset + 3];
     printf("%-*s \x1b[2;33m%4d\x1b[0m \x1b[2m|\x1b[0m ", PRINT_OP_PAD_LEN, name, constant);
     particle_print(chunk->constants.values[constant], true);
     printf(" : (\x1b[33m%d\x1b[0m args)\n", argCount);
-    return offset + 5;
+    return offset + 4;
 }
 
 /**
@@ -151,12 +151,22 @@ int nuc_disassembleInstruction(nuc_Chunk* chunk, int offset, const char* prompt)
         CASE_SIMPLE(OP_SUB, "\x1b[3;35mOP_SUB\x1b[0m");
         CASE_SIMPLE(OP_MUL, "\x1b[3;35mOP_MUL\x1b[0m");
         CASE_SIMPLE(OP_DIV, "\x1b[3;35mOP_DIV\x1b[0m");
+        CASE_SIMPLE(OP_MOD, "\x1b[3;35mOP_MOD\x1b[0m");
+        CASE_SIMPLE(OP_POW, "\x1b[3;35mOP_POW\x1b[0m");
+        CASE_SIMPLE(OP_XOR, "\x1b[3;35mOP_XOR\x1b[0m");
+        CASE_SIMPLE(OP_BITW_OR, "\x1b[3;35mOP_OR\x1b[0m");
+        CASE_SIMPLE(OP_BITW_AND, "\x1b[3;35mOP_BITW_AND\x1b[0m");
+        CASE_SIMPLE(OP_BITW_NOT, "\x1b[3;35mOP_BITW_NOT\x1b[0m");
+        CASE_SIMPLE(OP_ROL, "\x1b[3;35mOP_ROL\x1b[0m");
+        CASE_SIMPLE(OP_ROR, "\x1b[3;35mOP_ROR\x1b[0m");
         CASE_SIMPLE(OP_EQUAL, "\x1b[3;35mOP_EQUAL\x1b[0m");
         CASE_SIMPLE(OP_GREATER, "\x1b[3;35mOP_GREATER\x1b[0m");
         CASE_SIMPLE(OP_LESS, "\x1b[3;35mOP_LESS\x1b[0m");
 
         /** Atomizer Specific Operations */
         CASE_SIMPLE(OP_POP, "\x1b[34mOP_POP\x1b[0m");
+        CASE_SIMPLE(OP_CATCH_MODE, "\x1b[3;33mOP_CATCH_MODE\x1b[0m");
+        CASE_SIMPLE(OP_END_CATCH_MODE, "\x1b[3;33mOP_END_CATCH_MODE\x1b[0m");
         CASE_CONSTANT(OP_DEFINE_GLOBAL, "\x1b[34mOP_DEFINE_GLOBAL\x1b[0m");
         CASE_CONSTANT(OP_GET_GLOBAL, "\x1b[34mOP_GET_GLOBAL\x1b[0m");
         CASE_CONSTANT(OP_SET_GLOBAL, "\x1b[34mOP_SET_GLOBAL\x1b[0m");
@@ -165,6 +175,11 @@ int nuc_disassembleInstruction(nuc_Chunk* chunk, int offset, const char* prompt)
         CASE_SHORT(OP_GET_UPVALUE, "\x1b[34mOP_GET_UPVALUE\x1b[0m");
         CASE_SHORT(OP_SET_UPVALUE, "\x1b[34mOP_SET_UPVALUE\x1b[0m");
         CASE_SIMPLE(OP_CLOSE_UPVALUE, "\x1b[34mOP_CLOSE_UPVALUE\x1b[0m");
+
+        /** Array Operations */
+        CASE_CONSTANT(OP_ARRAY, "\x1b[3mOP_ARRAY\x1b[0m");
+        CASE_BYTE(OP_GET_MEMBER, "\x1b[3mOP_GET_MEMBER\x1b[0m");
+        CASE_BYTE(OP_SET_MEMBER, "\x1b[3mOP_SET_MEMBER\x1b[0m");
 
         /** Model Operations */
         CASE_CONSTANT(OP_MODEL, "\x1b[33mOP_MODEL\x1b[0m");
@@ -179,7 +194,7 @@ int nuc_disassembleInstruction(nuc_Chunk* chunk, int offset, const char* prompt)
         CASE_INVOKE(OP_SUPER_INVOKE, "\x1b[33mOP_SUPER_INVOKE\x1b[0m");
 
         /** Directive Operations */
-        // CASE_BYTE(OP_MUTATE, "\x1b[35mOP_MUTATE\x1b[0m");
+        CASE_BYTE(OP_MUTATE, "\x1b[35mOP_MUTATE\x1b[0m");
 
         /** Library Operations */
         CASE_CONSTANT(OP_GET_NATIVE, "\x1b[34mOP_GET_NATIVE\x1b[0m");
@@ -189,6 +204,7 @@ int nuc_disassembleInstruction(nuc_Chunk* chunk, int offset, const char* prompt)
         CASE_JUMP(OP_JUMP, "\x1b[31mOP_JUMP\x1b[0m");
         CASE_JUMP(OP_JUMP_IF_FALSE, "\x1b[31mOP_JUMP_IF_FALSE\x1b[0m");
         CASE_JUMP(OP_JUMP_IF_FALSE_OR_POP, "\x1b[31mOP_JUMP_IF_FALSE_OR_POP\x1b[0m");
+        CASE_JUMP(OP_JUMP_CATCH, "\x1b[31mOP_JUMP_CATCH\x1b[0m");
         CASE_JUMP(OP_LOOP, "\x1b[31mOP_LOOP\x1b[0m");
         CASE_BYTE(OP_CALL, "\x1b[31mOP_CALL\x1b[0m");
         case OP_CLOSURE: {  // this one requires some 'special' attention

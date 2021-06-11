@@ -27,12 +27,16 @@ typedef struct {
     nuc_Particle* top;              // pointer to top of stack
 
     // global variables
-    nuc_Obj* objects;            // global objects list
-    nuc_ObjString* constructor;  // constructor string
-    nuc_Table globals;           // script globals
-    nuc_Table interns;           // global string interns
-    nuc_Table natives;           // native methods
-    nuc_Primatives primatives;   // primative particle methods
+    nuc_Obj* objects;           // global objects list
+    nuc_Table globals;          // script globals
+    nuc_Table interns;          // global string interns
+    nuc_Table natives;          // native methods
+    nuc_Primatives primatives;  // primative particle methods
+
+    // common strings
+    nuc_ObjString* constructor;   // "@construct" string
+    nuc_ObjString* disruption;    // "Disruption" string
+    nuc_ObjString* modelLiteral;  // "{}" string
 
     // garbage collection
     int grayCount;     // grayed particles

@@ -12,6 +12,7 @@
  *  AVAILABLE OBJECTS  *
  ***********************/
 
+#include "objects/array.h"
 #include "objects/closure.h"
 #include "objects/model.h"
 #include "objects/reaction.h"
@@ -91,8 +92,11 @@ static void obj_free(nuc_Obj* obj) {
         case OBJ_BOUND_METHOD: {
             NUC_FREE(nuc_ObjBoundMethod, obj);
         } break;
-        case OBJ_ARRAY:
-            break;
+        case OBJ_ARRAY: {
+            nuc_ObjArr* arr = (nuc_ObjArr*)obj;
+            NUC_FREE_ARR(nuc_ObjArr*, arr->values, arr->capacity);
+            NUC_FREE(nuc_ObjArr, obj);
+        } break;
     }
 }
 
@@ -111,7 +115,10 @@ static bool obj_isEmpty(nuc_Obj* obj) {
             return inst->fields.count == 0 &&
                    memcmp(inst->model->name->chars, "Model", 5);
         }
-        case OBJ_ARRAY:
+        case OBJ_ARRAY: {
+            nuc_ObjArr* arr = (nuc_ObjArr*)obj;
+            return arr->count == 0;
+        }
         default:  // all otherwise will ALWAYS return false
             return false;
     }
@@ -158,6 +165,7 @@ void obj_print(nuc_Particle value, bool prettify) {
             NUC_PRETTIFY_WRAP(32, reaction_print(AS_BOUND_METHOD(value)->method->reaction));
             break;
         case OBJ_ARRAY:
+            NUC_PRETTIFY_WRAP(34, printf("<array: %lu>", AS_ARRAY(value)->count));
             break;
     }
 }

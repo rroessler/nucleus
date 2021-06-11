@@ -53,6 +53,7 @@ static inline bool nuc_isObjType(nuc_Particle value, nuc_ObjType type) {
 // Object Checks
 #define IS_CLOSURE(value) nuc_isObjType(value, OBJ_CLOSURE)
 #define IS_MODEL(value) nuc_isObjType(value, OBJ_MODEL)
+#define IS_ARRAY(value) nuc_isObjType(value, OBJ_ARRAY)
 #define IS_BOUND_METHOD(value) nuc_isObjType(value, OBJ_BOUND_METHOD)
 #define IS_INSTANCE(value) nuc_isObjType(value, OBJ_INSTANCE)
 #define IS_REACTION(value) nuc_isObjType(value, OBJ_REACTION)
@@ -62,6 +63,7 @@ static inline bool nuc_isObjType(nuc_Particle value, nuc_ObjType type) {
 // Object Casts
 #define AS_CLOSURE(value) ((nuc_ObjClosure*)AS_OBJ(value))
 #define AS_MODEL(value) ((nuc_ObjModel*)AS_OBJ(value))
+#define AS_ARRAY(value) ((nuc_ObjArr*)AS_OBJ(value))
 #define AS_BOUND_METHOD(value) ((nuc_ObjBoundMethod*)AS_OBJ(value))
 #define AS_INSTANCE(value) ((nuc_ObjInstance*)AS_OBJ(value))
 #define AS_REACTION(value) ((nuc_ObjReaction*)AS_OBJ(value))

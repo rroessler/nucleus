@@ -52,9 +52,15 @@ static bool atomizer_callValue(nuc_Particle callee, int argCount) {
             case OBJ_NATIVE: {  // want to call the item as a native method
                 nuc_NativeReaction native = AS_NATIVE(callee);
                 nuc_Particle result = native(argCount, atomizer.top - argCount);
-                atomizer.top -= argCount + 1;
-                PUSH(result);
-                return true;
+                if (!NUC_CHECK_AFLAG(NUC_AFLAG_DISRUPTED)) {
+                    atomizer.top -= argCount + 1;
+                    PUSH(result);
+                } else {
+                    nuc_Particle disruption = POP();
+                    atomizer.top -= argCount + 1;
+                    PUSH(disruption);
+                }
+                return !NUC_CHECK_AFLAG(NUC_AFLAG_DISRUPTED);
             }
 
             case OBJ_CLOSURE:  // can simple call as a closure

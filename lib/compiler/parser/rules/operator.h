@@ -22,6 +22,7 @@ static void parser_forceOperation(TokenType op) {
         CASE_EMIT(T_SLASH, OP_DIV);
         CASE_EMIT(T_PERCENTAGE, OP_MOD);
         CASE_EMIT(T_HAT, OP_XOR);
+        CASE_EMIT(T_POW, OP_POW);
         CASE_EMIT(T_BITW_AND, OP_BITW_AND);
         CASE_EMIT(T_BITW_OR, OP_BITW_OR);
         CASE_EMIT(T_ROL, OP_ROL);

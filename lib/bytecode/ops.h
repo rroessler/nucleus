@@ -15,6 +15,7 @@ typedef enum {
     OP_MUL,       // * (binary)
     OP_DIV,       // / (binary)
     OP_MOD,       // % (binary)
+    OP_POW,       // ** (binary)
     OP_XOR,       // ^ (binary)
     OP_BITW_OR,   // | (binary)
     OP_BITW_AND,  // & (binary)
@@ -30,11 +31,14 @@ typedef enum {
 
     /** Internal Control Operations */
     OP_POP,
+    OP_CATCH_MODE,
+    OP_END_CATCH_MODE,
     OP_RETURN,
 
     OP_JUMP,
     OP_JUMP_IF_FALSE,
     OP_JUMP_IF_FALSE_OR_POP,
+    OP_JUMP_CATCH,
     OP_LOOP,
 
     /** Variable Operations */
@@ -57,6 +61,11 @@ typedef enum {
     OP_GET_PROPERTY,
     OP_SET_PROPERTY,
     OP_SET_BASE_PROPERTY,
+
+    /** Array Operations */
+    OP_ARRAY,
+    OP_GET_MEMBER,
+    OP_SET_MEMBER,
 
     /** Model Specific Operations */
     OP_MODEL,

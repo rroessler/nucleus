@@ -5,7 +5,7 @@ Roadmap
     - [ ] Numeric Literals
         - [x] Decimal
         - [x] Float
-        - [ ] Hex (these just need parsers / C string conversions)
+        - [ ] Hex
         - [ ] Binary
         - [ ] Octal
         - [ ] Scientific
@@ -18,8 +18,8 @@ Roadmap
         - [x] Inline Object Definitions
         - [x] Base Model Declaration
         - [x] Derived Model Declaration
-    - [ ] Array
-        - [ ] Inline Array Declaration
+    - [x] Array
+        - [x] Inline Array Declaration
     - [ ] Primative Builtin Methods
         - [ ] Numeric
         - [ ] String
@@ -36,13 +36,13 @@ Roadmap
     - [ ] `for` loop w Custom Operators
     - [x] `do` / `repif` loops (do while / while)
 - [ ] Builtin Operators
-    - [ ] Basic
+    - [x] Basic
         - [x] +
         - [x] -
         - [x] *
         - [x] /
         - [x] %
-        - [ ] **
+        - [x] **
     - [x] Unary
         - [x] !
         - [x] -
@@ -56,12 +56,13 @@ Roadmap
         - [x] >
         - [x] &&
         - [x] ||
-    - [ ] Bitwise
+    - [x] Bitwise
         - [x] &
         - [x] |
         - [x] <<
         - [x] >>
-        - [ ] ^
+        - [x] ^
+    - [ ] ...
 - [ ] Directives
     - [x] `@mutate`
     - [x] `@construct`

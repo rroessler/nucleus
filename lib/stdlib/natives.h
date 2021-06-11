@@ -19,8 +19,11 @@
 #define NUC_NTVDEF_TIME
 #define NUC_NTVDEF_MATH
 
+#define NUC_NTVDEF_DISRUPTIONS
+#define NUC_NTVDEF_THROW_DISRUPTION
+
 // defines for available reference array sizes
-#define NUC_NATIVE_REACTIONS_LEN 33  // THESE MUST BE CORRECT
+#define NUC_NATIVE_REACTIONS_LEN 34  // THESE MUST BE CORRECT
 #define NUC_NATIVE_PROPS_LEN 0       // VALUES OR ELSE ITEMS MAY BE MISSED
 
 /**********************
@@ -37,6 +40,7 @@ typedef struct {
  *  LIBRARY HEADERS  *
  *********************/
 
+#include "disruption/throw.h"
 #include "math/constants.h"
 #include "math/methods.h"
 #include "print.h"
@@ -56,6 +60,12 @@ nuc_NativeReactionReference nuc_nativeReactionRefs[] = {
 
 #ifdef NUC_NTVDEF_MATH  // math natives
     NUC_STDLIB__MATH_NATIVES,
+#endif
+
+#ifdef NUC_NTVDEF_DISRUPTIONS           // disruption methods
+    #ifdef NUC_NTVDEF_THROW_DISRUPTION  // throw methods
+    NUC_STDLIB__THROW_DISP
+    #endif
 #endif
 };
 

@@ -19,8 +19,9 @@ typedef enum {
     P_SHIFT,       // << >>
     P_TERM,        // + -
     P_FACTOR,      // * / %
+    P_EXP,         // **
     P_UNARY,       // ! -
-    P_CALL,        // . ()
+    P_CALL,        // . () []
     P_PRIMARY
 } Precedence;
 

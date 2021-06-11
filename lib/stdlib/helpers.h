@@ -75,7 +75,7 @@
  * @param METHOD            Method in which expectation occurs.
  */
 #define NUC_STDLIB_EXPECT_OBJ_TYPE(arg, isMethod, TYPE, METHOD)                                     \
-    if (!IS_OBJ(arg) || !isMethod(AS_OBJ(arg))) {                                                   \
+    if (!IS_OBJ(arg) || !isMethod(arg)) {                                                           \
         atomizer_catchableError(NUC_EXIT_TYPE, #METHOD " expected a \"" #TYPE "\" argument type."); \
         return NUC_NULL;                                                                            \
     }

@@ -12,6 +12,7 @@
 #include "../core/flags.h"
 #include "../global.h"
 #include "immediate.h"
+#include "model.h"
 
 /*******************
  *  HELPER MACROS  *
@@ -133,11 +134,37 @@ static void atomizer_catchableError(uint8_t code, const char* format, ...) {
     va_end(args);
 
     // and reallocate the buffer to an appropriate size
-    // size_t length = strlen(buffer);
-    // const char* errStr = (char*)realloc(&buffer, length);
+    size_t length = strlen(buffer);
 
     // now can play with the error as needed
-    nuc_immediateExit(NUC_EXIT_UNIMP, "Catchable disruptions have not been implemented yet.");
+    NUC_SET_AFLAG(NUC_AFLAG_DISRUPTED);  // set as disrupted regardless
+    atomizer.exitCode = code;
+    atomizer_buildDisruptionModel(buffer, length, code);
+}
+
+/**
+ * Handles throwing a disruption model instance.
+ * @param disruption                    Disruption to throw (as catchable).
+ */
+static void atomizer_thrownDisruption(nuc_ObjInstance* disruption) {
+    // preemptively get the code (needed for BOTH)
+    nuc_Particle codeValue;
+    nuc_ObjString* codeAccessor = objString_copy("code", 4);
+    table_get(&disruption->fields, codeAccessor, &codeValue);
+
+    // if not in a catchable state
+    if (!NUC_CHECK_AFLAG(NUC_AFLAG_DISRUPTION_CATCHABLE)) {
+        nuc_Particle msgValue;
+        nuc_ObjString* msgAccessor = objString_copy("message", 7);
+        table_get(&disruption->fields, msgAccessor, &msgValue);
+        atomizer_runtimeError((uint8_t)AS_NUMBER(codeValue), AS_CSTRING(msgValue));
+        return;
+    }
+
+    // otherwise throw as usual
+    NUC_SET_AFLAG(NUC_AFLAG_DISRUPTED);
+    atomizer.exitCode = AS_NUMBER(codeValue);
+    PUSH(NUC_OBJ(disruption));
 }
 
 #endif

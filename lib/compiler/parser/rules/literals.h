@@ -21,6 +21,26 @@ static void rule_number(bool canAssign) {
     chunk_emitConstant(NUC_NUM(value));
 }
 
+/** Parses a "hex" constant. */
+static void rule_nhex(bool canAssign) {
+    printf("Hex: %.*s\n", parser.previous.length, parser.previous.start);
+    double value = strtol(parser.previous.start, NULL, 16);
+    chunk_emitConstant(NUC_NUM(value));
+}
+
+/** Parses a "octal" constant. */
+static void rule_noct(bool canAssign) {
+    double value = strtol(parser.previous.start, NULL, 8);
+    chunk_emitConstant(NUC_NUM(value));
+}
+
+/** Parses a "binary" constant. */
+static void rule_nbin(bool canAssign) {
+    printf("Bin: %.*s\n", parser.previous.length, parser.previous.start);
+    double value = strtol(parser.previous.start, NULL, 2);
+    chunk_emitConstant(NUC_NUM(value));
+}
+
 /*********************
  *  STRING LITERALS  *
  *********************/

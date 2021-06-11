@@ -5,6 +5,7 @@
 #include "../expression.h"
 #include "../rules/precedence.h"
 #include "block.h"
+#include "catch.h"
 #include "if.h"
 #include "loop.h"
 #include "return.h"
@@ -32,6 +33,8 @@ static void nuc_statement() {
         fuser_forStatement();
     } else if (MATCH(T_RETURN)) {
         fuser_returnStatement();
+    } else if (MATCH(T_TRY)) {
+        fuser_catchStatement();
     } else {  // default is an expression statement
         nuc_expressionStatement();
     }

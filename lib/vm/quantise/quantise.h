@@ -99,6 +99,7 @@ static inline nuc_Particle atomizer_resolveNative(nuc_ObjString* name);
  *  CASE METHODS  *
  ******************/
 
+#include "case/member.h"    // member access
 #include "case/operator.h"  // operator cases
 
 /******************
@@ -113,6 +114,7 @@ static inline nuc_Particle atomizer_resolveNative(nuc_ObjString* name);
 void atomizer_quantise() {
     // set a call frame reference to use for instructions
     nuc_CallFrame* frame = &atomizer.frames[atomizer.frameCount - 1];
+    uintptr_t catchBlockIP = 0x00;  // set EMPTY catch block IP
 
     for (;;) {
 /*******************
@@ -162,9 +164,19 @@ void atomizer_quantise() {
             // operations
             case OP_MOD: {
                 EXPECT_NUMERICS(%);  // want to expect two numerics
-                double b = POP();
-                double a = POP();
-                PUSH(NUC_NUM(fmod(b, a)));
+                double b = AS_NUMBER(POP());
+                double a = AS_NUMBER(POP());
+                PUSH(NUC_NUM(fmod(a, b)));
+                continue;
+            }
+
+            // power of needs to be completed with pow(), since C has no in-built operator
+            // to coordinate doing so
+            case OP_POW: {
+                EXPECT_NUMERICS(**);  // want to expect two numerics
+                double b = AS_NUMBER(POP());
+                double a = AS_NUMBER(POP());
+                PUSH(NUC_NUM(pow(a, b)));
                 continue;
             }
 
@@ -294,6 +306,18 @@ void atomizer_quantise() {
                 return;
             }
 
+            // SETS the atomizer into a CATCHABLE state
+            case OP_CATCH_MODE: {
+                NUC_SET_AFLAG(NUC_AFLAG_DISRUPTION_CATCHABLE);
+                continue;
+            }
+
+            // ENDS the CATCHABLE atomizer state if currently set
+            case OP_END_CATCH_MODE: {
+                NUC_UNSET_AFLAG(NUC_AFLAG_DISRUPTION_CATCHABLE);
+                continue;
+            }
+
             // found a request to JUMP to a given address
             case OP_JUMP: {
                 uint32_t offset = READ_ADDR();
@@ -316,6 +340,12 @@ void atomizer_quantise() {
                 } else {
                     POP();  // otherwise want to POP
                 }
+                continue;
+            }
+
+            // saves a CATCH jump to execute when an error is caught
+            case OP_JUMP_CATCH: {
+                catchBlockIP = READ_ADDR() + (uintptr_t)frame->ip;
                 continue;
             }
 
@@ -467,6 +497,58 @@ void atomizer_quantise() {
             }
 
             /**********************
+             *  ARRAY OPERATIONS  *
+             **********************/
+            case OP_ARRAY: {
+                // create the new array
+                int arrayCount = READ_SHORT();
+                nuc_ObjArr* arr = objArr_new(ARR_BASIC);
+
+                // To build the array we need to add each item in ORIGINAL order. This will
+                // mean going from the furtherst item onto the stack backwards. After this
+                // items will all need to be POPPED sequentially. This ensures correct ordering
+                // whilst also being the quickest solution WITHOUT shifting items onto the array
+                // as this will take a larger computational cost.
+                for (int i = arrayCount - 1; i >= 0; i--) objArr_push(arr, PEEK(i));
+                for (int i = arrayCount; i > 0; i--) POP();  // and then POP them all
+
+                PUSH(NUC_OBJ(arr));  // and push the array onto the stack
+                continue;
+            }
+
+            // coordinates retrieving a MEMBER from an array or model.
+            case OP_GET_MEMBER: {
+                // make sure that we have an array or an instance
+                if (IS_ARRAY(PEEK(1))) {
+                    if (quantise_getArrayMember(POP(), AS_ARRAY(POP()))) continue;
+                    PUSH(NUC_NULL);  // need to push null in bad accessing
+                    break;
+                } else if (IS_INSTANCE(PEEK(1))) {
+                    if (quantise_getModelMember(POP(), AS_INSTANCE(POP()))) continue;
+                    PUSH(NUC_NULL);  // need to push null in bad accessing
+                    break;
+                }
+
+                atomizer_catchableError(NUC_EXIT_TYPE, "Only arrays and models allow access to getting members with the square bracket operator.");
+                break;
+            }
+
+            // coordinates setting a MEMBER of an array of model.
+            case OP_SET_MEMBER: {
+                // make sure that we have an array or an instance
+                if (IS_ARRAY(PEEK(2))) {
+                    if (!quantise_setArrayMember(POP(), POP(), AS_ARRAY(POP()))) break;
+                    continue;
+                } else if (IS_INSTANCE(PEEK(2))) {
+                    if (!quantise_setModelMember(POP(), POP(), AS_INSTANCE(POP()))) break;
+                    continue;
+                }
+
+                atomizer_catchableError(NUC_EXIT_TYPE, "Only arrays and models allow access to setting members with the square bracket operator.");
+                break;
+            }
+
+            /**********************
              *  MODEL OPERATIONS  *
              **********************/
             case OP_MODEL: {  // creates a new model base
@@ -534,7 +616,7 @@ void atomizer_quantise() {
             // and bound methods.
             case OP_GET_PROPERTY: {
                 if (!IS_INSTANCE(PEEK(0))) {
-                    atomizer_catchableError(NUC_EXIT_REF, "Only model instances can have properties.");
+                    atomizer_catchableError(NUC_EXIT_TYPE, "Only model instances can have properties.");
                     break;  // and break to error handler
                 }
 
@@ -576,7 +658,7 @@ void atomizer_quantise() {
                 nuc_ObjString* accessor = READ_STRING();
                 nuc_ObjInstance* instance = AS_INSTANCE(PEEK(1));
                 if (!table_set(&instance->model->defaults, accessor, PEEK(0))) {
-                    table_set(&instance->fields, accessor, PEEK(0));  // TODO: work out why this ???
+                    table_set(&instance->fields, accessor, PEEK(0));
                 }
 
                 // and complete the following if NOT setting a base property
@@ -598,9 +680,15 @@ void atomizer_quantise() {
         if (!NUC_CHECK_AFLAG(NUC_AFLAG_DISRUPTED)) {
             continue;  // no errors, immediately continue
         } else if (NUC_CHECK_AFLAG(NUC_AFLAG_DISRUPTION_CATCHABLE)) {
-            // error that fell through IS catchable, so we can FIX catch conditions here
-            NUC_UNIMP("Catchable errors have not been implemented yet.");
-            return;
+            // Error that fell through IS catchable, so we can FIX catch conditions here. Start
+            // by JUMPING to the catch block IP.
+            frame->ip = (uint8_t*)catchBlockIP;
+            catchBlockIP = 0x00;                              // reset the catch block IP
+            NUC_UNSET_AFLAG(NUC_AFLAG_DISRUPTION_CATCHABLE);  // reset the catchable mode
+            NUC_UNSET_AFLAG(NUC_AFLAG_DISRUPTED);             // and the disruption flag
+
+            // and for now continue on as desired
+            continue;
         }
 
         // Fell through BOTH, so must have a disruption that is not caught. Hence want to STOP looping

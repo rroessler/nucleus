@@ -5,6 +5,7 @@
 #include "../declaration/model.h"
 #include "../declaration/variable.h"
 #include "../statement/logical.h"
+#include "array.h"
 #include "base.h"
 #include "call.h"
 #include "grouping.h"
@@ -20,6 +21,8 @@ nuc_ParseRule rules[] = {
     [T_RIGHT_PAREN] = {NULL, NULL, P_NONE},
     [T_LEFT_BRACE] = {rule_baseModel, NULL, P_NONE},
     [T_RIGHT_BRACE] = {NULL, NULL, P_NONE},
+    [T_LEFT_BRACK] = {rule_arrayLiteral, rule_member, P_CALL},
+    [T_RIGHT_BRACK] = {NULL, NULL, P_NONE},
     [T_COMMA] = {NULL, NULL, P_NONE},
     [T_PERIOD] = {NULL, rule_accessor, P_CALL},
     [T_SEMICOLON] = {NULL, NULL, P_NONE},
@@ -30,6 +33,8 @@ nuc_ParseRule rules[] = {
     [T_PLUS] = {NULL, rule_binary, P_TERM},
     [T_SLASH] = {NULL, rule_binary, P_FACTOR},
     [T_STAR] = {NULL, rule_binary, P_FACTOR},
+    [T_PERCENTAGE] = {NULL, rule_binary, P_FACTOR},
+    [T_POW] = {NULL, rule_binary, P_EXP},
     [T_AND] = {NULL, rule_logical_and, P_AND},
     [T_OR] = {NULL, rule_logical_or, P_OR},
     [T_BITW_AND] = {NULL, rule_binary, P_BITW_AND},
@@ -37,6 +42,7 @@ nuc_ParseRule rules[] = {
     [T_BITW_NOT] = {rule_unary, NULL, P_NONE},
     [T_ROL] = {NULL, rule_binary, P_SHIFT},
     [T_ROR] = {NULL, rule_binary, P_SHIFT},
+    [T_HAT] = {NULL, rule_binary, P_BITW_XOR},
 
     // comparisons / equalities
     [T_BANG] = {rule_unary, NULL, P_NONE},
@@ -52,9 +58,9 @@ nuc_ParseRule rules[] = {
     [T_IDENTIFIER] = {rule_variable, NULL, P_NONE},
     [T_LIT_STRING] = {rule_string, NULL, P_NONE},
     [T_LIT_NUMBER] = {rule_number, NULL, P_NONE},
-    [T_LIT_HEX] = {NULL, NULL, P_NONE},
-    [T_LIT_OCT] = {NULL, NULL, P_NONE},
-    [T_LIT_BIN] = {NULL, NULL, P_NONE},
+    [T_LIT_HEX] = {rule_nhex, NULL, P_NONE},
+    [T_LIT_OCT] = {rule_noct, NULL, P_NONE},
+    [T_LIT_BIN] = {rule_nbin, NULL, P_NONE},
     [T_NULL] = {rule_literal, NULL, P_NONE},
     [T_TRUE] = {rule_literal, NULL, P_NONE},
     [T_FALSE] = {rule_literal, NULL, P_NONE},
