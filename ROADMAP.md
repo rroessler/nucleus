@@ -5,9 +5,9 @@ Roadmap
     - [ ] Numeric Literals
         - [x] Decimal
         - [x] Float
-        - [ ] Hex
-        - [ ] Binary
-        - [ ] Octal
+        - [x] Hex
+        - [x] Binary
+        - [x] Octal
         - [ ] Scientific
     - [x] String Literals
         - [x] ASCII
@@ -64,21 +64,23 @@ Roadmap
         - [x] ^
     - [ ] ...
 - [ ] Directives
-    - [x] `@mutate`
-    - [x] `@construct`
+    - [x] `@mutate` (allows mutating a const variable)
+    - [x] `@construct` (model constructor)
+    - [ ] `@freeze` (freezes arrays or models)
     - [ ] ...
 - [ ] Native Libraries
     - [ ] `std.print`
     - [x] `math`
-    - [x] `std.rand`
+    - [ ] `std.rand`
     - [ ] ...
 - [ ] Runtime Optimizations
     - [x] Lazy Loading Natives
     - [x] NaN Boxing with Mutability
 - [ ] Error Disruptions / Resolving
     - [x] Internal Immediate Disruptions
-    - [ ] Catchable Error Handling
-    - [ ] User Error Throwing
+    - [x] Catchable Error Handling
+    - [x] User Error Throwing
+    - [ ] ... (may be more to do)
 - [ ] Module Implementation
 - [ ] Asynchronicity
 - [ ] Documentation

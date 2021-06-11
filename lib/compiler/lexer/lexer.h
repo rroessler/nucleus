@@ -196,6 +196,7 @@ static void lexer_skipWS() {
 
 /** Tokenizes special lexer methods */
 #define LEXER_SPECIAL_NUMERIC(METHOD, TYPE)                                           \
+    lexer_advance();                                                                  \
     lexer.start = lexer.current;                                                      \
     while (strings_##METHOD(lexer_peek())) lexer_advance();                           \
     if (lexer.start == lexer.current) return lexer_error("Invalid numeric literal."); \
@@ -205,7 +206,7 @@ static void lexer_skipWS() {
 static Token
 lexer_number() {
     if (lexer.current[-1] == '0') {  // potentially a octal, hex or binary value
-        switch (lexer_advance()) {
+        switch (lexer_peek()) {
             case 'x':
             case 'X':  // HEXADECIMAL
                 LEXER_SPECIAL_NUMERIC(isHex, HEX);
@@ -215,8 +216,8 @@ lexer_number() {
             case 'o':
             case 'O':  // OCTAL
                 LEXER_SPECIAL_NUMERIC(isOctal, OCT);
-            default:  // just return as a single value
-                return lexer_error("Invalid numeric literal.");
+            default:  // break through to read as normal numeric
+                break;
         }
     }
 

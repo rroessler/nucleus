@@ -16,11 +16,11 @@
 #define STACK_MAX (FRAMES_MAX * UINT8_COUNT)
 
 // debug defines
-#define NUC_DEBUG_BYTECODE
-#define NUC_DEBUG_TRACE
-#define NUC_DEBUG_STACK_TRACE
-#define NUC_DEBUG_OP_TRACE
-#define NUC_DEBUG_GC
+// #define NUC_DEBUG_BYTECODE
+// #define NUC_DEBUG_TRACE
+// #define NUC_DEBUG_STACK_TRACE
+// #define NUC_DEBUG_OP_TRACE
+// #define NUC_DEBUG_GC
 
 // native library definitions
 
