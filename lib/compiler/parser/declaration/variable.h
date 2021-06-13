@@ -79,7 +79,7 @@ static inline void fuser_addGlobalImmutable(uint32_t ghash) {
  * @param ghash                             Global hash reference to check.
  */
 static inline bool fuser_checkGlobalImmutable(uint32_t ghash) {
-    for (int i = 0; i < current->immutableCount; i++) {
+    for (size_t i = 0; i < current->immutableCount; i++) {
         if (current->immutables[i] == ghash) return NUC_IMMUTABLE;
     }
 

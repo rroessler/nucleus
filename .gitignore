@@ -11,3 +11,8 @@ __archive
 
 # ignoring macOS silly hidden files
 .DS_Store
+
+# ignoring node items
+node_modules/
+build/
+dist/

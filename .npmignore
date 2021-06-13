@@ -1,0 +1,10 @@
+# ignoring repo items
+docs/
+assets/
+examples/
+performance/
+dist/
+
+# ignoring synch with .gitignore
+__archive/
+.vscode/

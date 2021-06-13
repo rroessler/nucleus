@@ -29,15 +29,45 @@ Primary Goals
 Quick Start
 -----------
 
-At this stage the Nucleus project can only be compiled from source. The only tool required to do this currenty do this is either "gcc" or "clang". Other setups have not been tested, however "MinGW" and "MSCV" should work. Additionally Git will be required to clone this repo.
+### Install Locally
+
+At this stage the Nucleus language is not available to be installed locally. Although executables to the wrapped NodeJS CLI can be made, install scripts have not yet been implemented. Once this is done however, all that will be needed to run Nucleus source code will be an install script or application
+installer.
+
+### NodeJS
+
+The Nucleus project repository can be cloned and ran through NodeJS. This can be done through the following commands.
+
+```bash
+git clone https://github.com/rroessler/nucleus.git  # clone the repo
+cd nucleus                                          # enter
+npm run setup                                       # run the setup items
+
+./nucleus.js "filename.nuc"     # and run a nucleus file
+# OR
+./nucleus.js                    # enter REPL mdoe
+```
+
+### Source
+
+To compile the Nucleus language from source, this repository can be downloaded and the `./src/nucleus.c` file can be compiled as desired. The process to do so can be seen below
 
 ```bash
 git clone https://github.com/rroessler/nucleus.git
 cd nucleus
-gcc -O3 -g "./src/nucleus.h" -o "./nucleus.exe"
+gcc -O2 -g "./src/nucleus.h" -o "./nucleus.exe" # -O2 flag recommended for performance
 ```
 
 The binary can then be run in two modes, REPL and File. The REPL can be invoked by calling `./nucleus.exe` with no arguments and ".nuc" files can be executed by calling `./nucleus.exe filename`.
+
+Additionally when compiling from source, some extra "defines" can be utilised to alter Nucleus' functionality. These defines allow for:
+- Stack Tracing
+- Operation Tracing
+- Pre-Execution Bytecode Dump
+- Garbage Collection Statistics
+- Standard Library Reduction / Selection
+
+In particular the ability to compile a version of Nucleus with reduced standard library functionality will be extremely useful for minimising a Nucleus executable that could be compiled for embedded devices. On top of this, there are plans to seperate the compiler and interpreter so that source bytecode could be compiled and loaded onto an embedded device with a standalone interpreter. Or at least this is what I had in mind when allowing for this implementation.
 
 Documentation
 -------------

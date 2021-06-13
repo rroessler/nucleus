@@ -16,7 +16,7 @@ void nuc_repl() {
         if (!fgets(line, sizeof(line), stdin)) break;
 
         // patch some items here before atomizing
-
+        atomizer_init();
         nuc_atomize(line);  // and complete
     }
 }

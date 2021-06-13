@@ -11,9 +11,6 @@
 
 /** Entry Point for Nucleus Programs */
 int main(int argc, const char* argv[]) {
-    // initialise the atomizer
-    atomizer_init();
-
     if (argc == 1) {
         nuc_repl();
     } else if (argc == 2) {

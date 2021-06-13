@@ -5,7 +5,7 @@
 #include "../global.h"
 
 // FORWARD DECLARATIONS
-void gc_markObject();
+void gc_markObject(nuc_Obj* object);
 
 /** Marks the compilers roots as safe from garbage collection. */
 void gc_markCompilerRoots() {

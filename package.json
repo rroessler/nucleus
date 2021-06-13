@@ -1,0 +1,37 @@
+{
+    "name": "nucleus",
+    "version": "0.2.0",
+    "description": "Nucleus Programming Language",
+    "main": "index.js",
+    "scripts": {
+        "setup": "npm run configure && npm run build",
+        "configure": "node-gyp configure",
+        "build": "node-gyp build",
+        "package": "pkg ."
+    },
+    "bin": {
+        "nucleus": "./nucleus.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/rroessler/nucleus.git"
+    },
+    "keywords": [],
+    "author": "rroessler",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/rroessler/nucleus/issues"
+    },
+    "homepage": "https://github.com/rroessler/nucleus#readme",
+    "dependencies": {
+        "commander": "^7.2.0",
+        "nan": "^2.14.2"
+    },
+    "devDependencies": {
+        "pkg": "^5.2.1"
+    },
+    "pkg": {
+        "scripts": "**/*.js",
+        "outputPath": "dist"
+    }
+}

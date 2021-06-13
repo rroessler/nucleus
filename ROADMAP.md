@@ -76,6 +76,7 @@ Roadmap
 - [ ] Runtime Optimizations
     - [x] Lazy Loading Natives
     - [x] NaN Boxing with Mutability
+    - [ ] ...
 - [ ] Error Disruptions / Resolving
     - [x] Internal Immediate Disruptions
     - [x] Catchable Error Handling
@@ -84,3 +85,6 @@ Roadmap
 - [ ] Module Implementation
 - [ ] Asynchronicity
 - [ ] Documentation
+- [ ] Accessibility
+    - [x] Node Module / CLI
+    - [ ] WASM Compilation

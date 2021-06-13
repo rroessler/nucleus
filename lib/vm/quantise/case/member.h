@@ -20,7 +20,7 @@ static inline bool quantise_getArrayMember(nuc_Particle accessor, nuc_ObjArr* ar
     }
 
     // pop the array and check range access
-    if (index < 0 || (int)index > arr->count - 1) {
+    if (index < 0 || (int)index > (int)arr->count - 1) {
         atomizer_catchableError(NUC_EXIT_RANGE, "Array accessor out of feasible range.");
         return false;
     }
@@ -79,7 +79,7 @@ static inline bool quantise_setArrayMember(nuc_Particle value, nuc_Particle acce
     }
 
     // pop the array and check range access
-    if (index < 0 || (int)index > arr->count - 1) {
+    if (index < 0 || (int)index > (int)arr->count - 1) {
         atomizer_catchableError(NUC_EXIT_RANGE, "Array accessor out of feasible range.");
         return false;
     }

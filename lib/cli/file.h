@@ -48,6 +48,7 @@ char* nuc_readFile(const char* path) {
  */
 void nuc_runFile(const char* path) {
     char* source = nuc_readFile(path);
+    atomizer_init();
     nuc_atomize(source);
     free(source);  // free the allocated source
 }
