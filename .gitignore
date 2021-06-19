@@ -1,6 +1,7 @@
 # ignoring vscode workflow
 .vscode
 nucleus.exe.dSYM
+temp/
 
 # ignoring output files
 nucleus.exe

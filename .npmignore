@@ -8,3 +8,4 @@ dist/
 # ignoring synch with .gitignore
 __archive/
 .vscode/
+temp/

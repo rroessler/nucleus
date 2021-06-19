@@ -2,8 +2,10 @@
 #include <nan.h>
 
 // Nucleus Headers
+extern "C" {
 #include "cli/eval.h"
 #include "cli/file.h"
+}
 
 NAN_METHOD(binding_file) {
     // ensure an argument is given
